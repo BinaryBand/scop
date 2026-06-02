@@ -1,0 +1,60 @@
+{%- set pt = north_star.page_template -%}
+## 9. Page Template
+
+A room that implements all three query flags can be fully described by those calls. A consumer that makes all three has everything needed to render a complete page without app-specific code.
+
+```
+ourapp [subcommand] --status   →  page chrome + stats
+ourapp [subcommand] --list     →  content
+ourapp [subcommand] --help     →  actions
+```
+
+**Slot map:**
+
+| Slot | Flag | MSGID | GUI rendering |
+| --- | --- | --- | --- |
+{%- for slot in pt.slots.values() %}
+| {{ slot.display }} | {{ slot.flag_md }} | {{ slot.msgid_md }} | {{ slot.gui }} |
+{%- endfor %}
+
+> **Routing note:** the `intent` field on `PAGE_BEGIN` — not the triggering flag — is the consumer's actual routing discriminant. `"query"` updates or replaces the page; `"action"` opens an activity overlay leaving all other slots intact. See §10 for the full routing table.
+
+Each call is independent. A page MAY be built from a subset.
+
+**Optional slots** (advisory, no new MSGIDs):
+
+| Slot | Convention |
+| --- | --- |
+{%- for slot in pt.optional_slots.values() %}
+| {{ slot.display }} | {{ slot.convention_md }} |
+{%- endfor %}
+
+**Full page manifest example** (`ourapp snapshot`) — help entries shown without `params` for brevity; conformance requires `params` for all `kind = "action"` entries that accept inputs (§8.1):
+
+```json
+{"pri": 6, "msgid": "PAGE_BEGIN", "room": "snapshot", "title": "Snapshots", "subtitle": "Manage and compare snapshots", "icon": ":camera_with_flash:", "intent": "query", "msg": "=== Snapshots ==="}
+{"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "tracked", "label": "Tracked files", "value": 1042, "type": "number", "msg": "Tracked files: 1042"}
+{"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "last_snap", "label": "Last snapshot", "value": "2026-05-30T14:32:00Z", "type": "string", "msg": "Last snapshot: 2026-05-30T14:32:00Z"}
+{"pri": 6, "msgid": "TABLE_DECLARE", "room": "snapshot", "id": "snaps", "label": "Snapshots", "schema": ["name", "files", "size", "date"], "msg": "Snapshots"}
+{"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": "1.2MB", "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
+{"pri": 6, "msgid": "TABLE_END", "room": "snapshot", "id": "snaps", "msg": "1 snapshot"}
+{"pri": 6, "msgid": "LIST_DECLARE", "room": "snapshot", "id": "help", "label": "Commands", "ordered": false, "msg": "Commands"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "create", "value": {"command": "snapshot create", "description": "Take a new snapshot"}, "msg": "  create    Take a new snapshot"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "diff", "value": {"command": "snapshot diff", "description": "Compare two snapshots"}, "msg": "  diff      Compare two snapshots"}
+{"pri": 6, "msgid": "LIST_END", "room": "snapshot", "id": "help", "msg": ""}
+{"pri": 6, "msgid": "PAGE_END", "room": "snapshot", "msg": ""}
+```
+
+**CLI output** (msg fields only):
+
+```
+=== Snapshots ===
+Tracked files: 1042
+Last snapshot: 2026-05-30T14:32:00Z
+Snapshots
+snap-001  42 files  1.2MB  2026-05-30
+1 snapshot
+Commands
+  create    Take a new snapshot
+  diff      Compare two snapshots
+```

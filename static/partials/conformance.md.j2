@@ -1,0 +1,10 @@
+{%- set c = north_star.conformance -%}
+## 11. Conformance
+
+**Producer MUST:** {{ c.producer_MUST | join('; ') }}.
+
+**Producer SHOULD:** {{ c.producer_SHOULD | join('; ') }}.
+
+**Consumer MUST:** {{ c.consumer_MUST | join('; ') }}.
+
+**Consumer SHOULD:** {{ c.consumer_SHOULD | join('; ') }}.

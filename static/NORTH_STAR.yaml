@@ -317,65 +317,72 @@ flag_contracts:
       - PAGE_END
 
     help_item_schema:
-      # Value object for every LIST_APPEND where id = "help"
-      # NOTE: the `kind` field is defined here and in SCOP-M §4.6 but is not
-      # yet present in SCOP.md §8.1. It is tracked as a pending addition to
-      # SCOP.md. Until that addition lands, audit tools MUST NOT treat its
-      # absence from a producer's --help output as a conformance violation.
       required_fields: [command, description]
       optional_fields: [kind, params]
       fields:
-        command: { type: string, description: "CLI token for this entry" }
-        description: { type: string, description: "Human-readable description" }
+        command:
+          type: string
+          description: "CLI token for this entry"
+          doc: 'CLI token for this entry (e.g. `"snap"`)'
+        description:
+          type: string
+          description: "Human-readable description"
+          doc: "Human-readable description"
         kind:
           type: string
           enum: [action, group]
           default: action
-          status: pending_scop_md_addition # not yet in SCOP.md §8.1
           semantics:
-            action: "executable leaf command"
-            group: "navigates to a subroom"
+            action: "executable leaf"
+            group: "navigates to subroom"
+          doc: '`"action"` (executable leaf) or `"group"` (navigates to subroom). Default: `"action"`'
         params:
           type: array
           required_when: "kind=action AND command accepts one or more inputs"
           constraint: "Omitting params when kind=action and inputs exist defeats zero-app-knowledge guarantee"
-          item_schema: param_object # see below
+          item_schema: param_object
+          doc: 'MUST be present and non-empty for `kind = "action"` entries that accept one or more inputs. MAY be omitted for `kind = "group"` entries or parameter-free actions.'
       params_ordering:
-        rule: "positionals MUST precede flags; required flags MUST precede optional flags; alphabetical by name within each group"
+        rule: "positionals MUST precede flags. Among flags, required flags MUST precede optional. Within each group, alphabetical by `name`"
 
     param_object:
-      # Each element of the params array
       required_fields: [name, kind]
       optional_fields: [type, short, metavar, required, repeatable, description]
       fields:
         name:
-          {
-            type: string,
-            description: "Flag name (e.g. --path) or positional label (e.g. target)"
-          }
-        kind: { type: string, enum: [flag, positional] }
+          type: string
+          description: "Flag name (e.g. --path) or positional label (e.g. target)"
+          doc: 'Flag name (e.g. `"--path"`) or positional label (e.g. `"target"`)'
+        kind:
+          type: string
+          enum: [flag, positional]
+          doc: '`"flag"` or `"positional"`'
         type:
           type: string
           default: string
-          enum:
-            [string, number, boolean, path, datetime, duration, bytes, choice]
+          enum: [string, number, boolean, path, datetime, duration, bytes, choice]
           note: "Types from SCOP-M §5; broader than the SCALAR_SET.type enum"
+          doc: 'One of the types defined in SCOP-M §5. Default: `"string"`'
         short:
-          {
-            type: string,
-            note: "Single-char short flag (e.g. -p). Valid for kind=flag only."
-          }
+          type: string
+          note: "Single-char short flag (e.g. -p). Valid for kind=flag only."
+          doc: 'Short alias (e.g. `"-p"`). Valid for `kind = "flag"` only'
         metavar:
-          {
-            type: string,
-            description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)"
-          }
+          type: string
+          description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)"
+          doc: 'Placeholder in usage line (e.g. `"PATH"`, `"SNAPSHOT"`)'
         required:
           type: boolean
           default_for_positional: true
           default_for_flag: false
-        repeatable: { type: boolean, default: false }
-        description: { type: string }
+          doc: 'Default: `true` for positionals, `false` for flags'
+        repeatable:
+          type: boolean
+          default: false
+          doc: 'Whether the param may appear multiple times. Default: `false`'
+        description:
+          type: string
+          doc: "Human-readable description"
 
   version:
     flags: [--version]
@@ -408,33 +415,20 @@ flag_contracts:
     flags: [--quiet, -q]
     suppress: [PROCESS_LOG, PROCESS_UPDATE]
     never_suppress:
-      [
-        PAGE_BEGIN,
-        PAGE_END,
-        PROCESS_BEGIN,
-        PROCESS_END,
-        SCALAR_SET,
-        LIST_DECLARE,
-        LIST_APPEND,
-        LIST_UPDATE,
-        LIST_REMOVE,
-        LIST_END,
-        TABLE_DECLARE,
-        TABLE_ROW,
-        TABLE_UPDATE,
-        TABLE_END,
-        "any event with pri ≤ 4"
-      ]
+      [PAGE_BEGIN, PAGE_END, PROCESS_BEGIN, PROCESS_END, SCALAR_SET,
+       LIST_*, TABLE_*, "any event with pri ≤ 4"]
+    effect: 'MUST suppress `PROCESS_LOG` and `PROCESS_UPDATE`. MUST NOT suppress `PAGE_BEGIN`, `PAGE_END`, `PROCESS_BEGIN`, `PROCESS_END`, `SCALAR_SET`, `LIST_*`, `TABLE_*`, or any event with `pri ≤ 4`.'
 
   verbose:
     flags: [--verbose, -v]
-    include: "events with pri = 7" # pri=7 (DEBUG) shown when --verbose active
+    include: "pri = 7 events"
     mutual_exclusion: "--quiet"
     precedence: "MUST take precedence over --quiet"
+    effect: 'MUST include `pri = 7` events'
 
   all:
     flags: [--all, -a]
-    effect: "MUST expand scope of LIST and TABLE output"
+    effect: 'MUST expand scope of `LIST` and `TABLE` output'
 
   # ── Modifier flags — annotate PROCESS_* events; no new MSGIDs ───────────
 
@@ -487,30 +481,59 @@ page_template:
 
   slots:
     page_chrome:
-      { source_flag: any, msgid_families: [PAGE], gui: "title, subtitle, icon" }
+      source_flag: any
+      msgid_families: [PAGE]
+      gui: "title, subtitle, icon"
+      display: "Page chrome"
+      flag_md: "any"
+      msgid_md: '`PAGE_BEGIN`'
     stats:
-      { source_flag: --status, msgid_families: [SCALAR], gui: "stat cards" }
+      source_flag: --status
+      msgid_families: [SCALAR]
+      gui: "stat cards"
+      display: "Stats"
+      flag_md: '`--status`'
+      msgid_md: '`SCALAR_SET`'
     content:
-      { source_flag: --list, msgid_families: [TABLE, LIST], gui: "grid, list" }
+      source_flag: --list
+      msgid_families: [TABLE, LIST]
+      gui: "grid, list"
+      display: "Content"
+      flag_md: '`--list`'
+      msgid_md: '`TABLE` or `LIST`'
     actions:
-      {
-        source_flag: --help,
-        msgid_families: [LIST],
-        list_id_constraint: "id=help",
-        gui: "buttons, command palette"
-      }
+      source_flag: --help
+      msgid_families: [LIST]
+      list_id_constraint: "id=help"
+      gui: "buttons, command palette"
+      display: "Actions"
+      flag_md: '`--help`'
+      msgid_md: '`LIST` (id="help")'
     activity:
-      {
-        source_flag: command,
-        msgid_families: [PROCESS],
-        gui: "progress bar, spinner"
-      }
+      source_flag: command
+      msgid_families: [PROCESS]
+      gui: "progress, spinner"
+      display: "Activity"
+      flag_md: "any command"
+      msgid_md: '`PROCESS_*`'
 
   optional_slots:
-    description: { convention: "SCALAR_SET with id=page.description" }
-    chart: { convention: "TABLE_DECLARE with display_hint=chart" }
-    empty_state: { convention: "SCALAR_SET with id=page.empty" }
-    badge: { convention: "SCALAR_SET with display_hint=badge" }
+    description:
+      convention: "SCALAR_SET with id=page.description"
+      display: "Description"
+      convention_md: '`SCALAR_SET` with `id="page.description"`'
+    chart:
+      convention: "TABLE_DECLARE with display_hint=chart"
+      display: "Chart"
+      convention_md: '`TABLE_DECLARE` with `display_hint: "chart"`'
+    empty_state:
+      convention: "SCALAR_SET with id=page.empty"
+      display: "Empty state"
+      convention_md: '`SCALAR_SET` with `id="page.empty"`'
+    badge:
+      convention: "SCALAR_SET with display_hint=badge"
+      display: "Badge"
+      convention_md: '`SCALAR_SET` with `display_hint: "badge"`'
 
 # ────────────────────────────────────────────────────────────────────────────
 # CONSUMER ROUTING TABLE (§10)
@@ -576,39 +599,37 @@ consumer_routing:
 # ────────────────────────────────────────────────────────────────────────────
 conformance:
   producer_MUST:
-    - "Emit NDJSON to stdout"
-    - "Include pri, msgid, room, msg in every event"
-    - "Ensure msg is a complete, standalone, human-readable line"
-    - "Wrap every stream in PAGE_BEGIN / PAGE_END"
-    - "Derive room from subcommand path per §6"
-    - "Use only MSGIDs defined in §7"
-    - "Implement --help, --version, --status, --list per §8.1"
-    - "Emit a well-formed empty page when a room has no data for --status or --list (see stream_protocol.rules)"
-    - "Encode all output as UTF-8"
+    - "emit NDJSON to stdout"
+    - "include `pri`, `msgid`, `room`, `msg` in every event"
+    - "ensure `msg` is a complete human-readable line"
+    - "wrap every stream in `PAGE_BEGIN` / `PAGE_END`"
+    - "derive `room` from the subcommand path (§6)"
+    - "use only MSGIDs defined in §7"
+    - "implement `--help`, `--version`, `--status`, and `--list` per §8.1"
+    - "emit a well-formed empty page (`PAGE_BEGIN` + `SCALAR_SET` with `id=\"page.empty\"` + `PAGE_END`) when a room has no data for `--status` or `--list`, rather than exiting with a non-zero status"
+    - "encode all output as UTF-8"
 
   producer_SHOULD:
-    - "Implement --quiet, --verbose"
-    - "Implement --dry-run"
-    - "Include intent on every PAGE_BEGIN: query for discovery flags, action for command execution"
-    - "Design rooms so --status and --list are invocable without positional arguments"
-    - "NOT encode runtime entity identifiers in room path"
-    - "Conform to POSIX.1 Utility Syntax Guidelines (single-hyphen short options; -- to end option processing; operands following options)"
+    - "implement `--quiet`, `--verbose` (§8.2)"
+    - "implement `--dry-run` (§8.3)"
+    - "include `intent` on every `PAGE_BEGIN` — `\"query\"` for discovery flag streams (`--help`, `--status`, `--list`), `\"action\"` for command execution streams"
+    - "design rooms such that `--status` and `--list` are invocable without positional arguments"
+    - "NOT encode runtime entity identifiers in their room path; entity context is a runtime parameter, not a room identifier"
 
   consumer_MUST:
-    - "Parse NDJSON line-by-line"
-    - "Route events per §10 using intent field on PAGE_BEGIN"
-    - "Render msg as fallback for unknown MSGIDs"
-    - "Ignore unknown MSGIDs without error"
-    - "Ignore unknown fields without error"
-    - "Map RFC 5424 severity per §4.2"
-    - "Synthesise terminal error state if stdout closes before PAGE_END — MUST NOT stay in loading state (see stream_protocol.rules)"
-    - "NOT suppress dry_run=true annotations (see security)"
-    - "Sanitise string values before rendering in HTML or injection-sensitive contexts (see security)"
+    - "parse NDJSON line-by-line"
+    - "route events per §10 using the `intent` field on `PAGE_BEGIN`"
+    - "render `msg` as fallback for unknown MSGIDs"
+    - "ignore unknown MSGIDs and fields without error"
+    - "map RFC 5424 severity per §4.2"
+    - "synthesize a terminal error state using any partial content received if stdout closes or the process exits before `PAGE_END` — MUST NOT remain in an indeterminate loading state"
+    - "NOT suppress `dry_run: true` annotations"
+    - "sanitize string values before rendering in HTML or injection-sensitive contexts"
 
   consumer_SHOULD:
-    - "Implement the three-flag protocol (§9)"
-    - "Support optional slots (§9)"
-    - "Implement stream size limits (see security)"
+    - "implement the three-flag protocol (§9)"
+    - "support optional slots (§9)"
+    - "implement stream size limits"
 
 # ────────────────────────────────────────────────────────────────────────────
 # SECURITY RULES

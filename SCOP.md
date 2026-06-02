@@ -263,7 +263,7 @@ Query flags produce data output and exit. Each response MUST be wrapped in `PAGE
 ```
 PAGE_BEGIN (room: current, title: command name, intent: "query")
 LIST_DECLARE (id: "help", ordered: false)
-LIST_APPEND *n (value: help-item object — see schema below)
+LIST_APPEND ×n (value: help-item object — see schema below)
 LIST_END
 PAGE_END
 ```
@@ -326,7 +326,7 @@ PAGE_END
 
 **`--version`**
 
-```proto
+```
 PAGE_BEGIN (room: null, title: app name)
 SCALAR_SET (id: "version", type: "string", value: semver)
 PAGE_END
@@ -334,19 +334,19 @@ PAGE_END
 
 **`--status`**
 
-```proto
+```
 PAGE_BEGIN (room: current, title: context name)
-SCALAR_SET *n
+SCALAR_SET ×n
 PAGE_END
 ```
 
 **`--list` / `-l`**
 
-```proto
+```
 PAGE_BEGIN (room: current, title: context name)
-TABLE_DECLARE → TABLE_ROW *n → TABLE_END   (items have named fields)
+TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)
   OR
-LIST_DECLARE → LIST_APPEND *n → LIST_END   (items are scalar)
+LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)
 PAGE_END
 ```
 
@@ -378,7 +378,7 @@ Modifier flags annotate `PROCESS_*` events with additional fields. No new MSGIDs
 
 A room that implements all three query flags can be fully described by those calls. A consumer that makes all three has everything needed to render a complete page without app-specific code.
 
-```proto
+```
 ourapp [subcommand] --status   →  page chrome + stats
 ourapp [subcommand] --list     →  content
 ourapp [subcommand] --help     →  actions
@@ -386,13 +386,13 @@ ourapp [subcommand] --help     →  actions
 
 **Slot map:**
 
-| Slot        | Flag        | MSGID              | GUI rendering         |
-| ----------- | ----------- | ------------------ | --------------------- |
-| Page chrome | any         | `PAGE_BEGIN`       | title, subtitle, icon |
-| Stats       | `--status`  | `SCALAR_SET`       | stat cards            |
-| Content     | `--list`    | `TABLE` or `LIST`  | grid, list            |
-| Actions     | `--help`    | `LIST` (id="help") | buttons, palette      |
-| Activity    | any command | `PROCESS_*`        | progress, spinner     |
+| Slot        | Flag        | MSGID              | GUI rendering            |
+| ----------- | ----------- | ------------------ | ------------------------ |
+| Page chrome | any         | `PAGE_BEGIN`       | title, subtitle, icon    |
+| Stats       | `--status`  | `SCALAR_SET`       | stat cards               |
+| Content     | `--list`    | `TABLE` or `LIST`  | grid, list               |
+| Actions     | `--help`    | `LIST` (id="help") | buttons, command palette |
+| Activity    | any command | `PROCESS_*`        | progress, spinner        |
 
 > **Routing note:** the `intent` field on `PAGE_BEGIN` — not the triggering flag — is the consumer's actual routing discriminant. `"query"` updates or replaces the page; `"action"` opens an activity overlay leaving all other slots intact. See §10 for the full routing table.
 
@@ -425,7 +425,7 @@ Each call is independent. A page MAY be built from a subset.
 
 **CLI output** (msg fields only):
 
-```proto
+```
 === Snapshots ===
 Tracked files: 1042
 Last snapshot: 2026-05-30T14:32:00Z
@@ -468,13 +468,13 @@ Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. 
 
 ## 11. Conformance
 
-**Producer MUST:** emit NDJSON to stdout; include `pri`, `msgid`, `room`, `msg` in every event; ensure `msg` is a complete human-readable line; wrap every stream in `PAGE_BEGIN` / `PAGE_END`; derive `room` from the subcommand path (§6); use only MSGIDs defined in §7; implement `--help`, `--version`, `--status`, and `--list` per §8.1. If a room has no data for `--status` or `--list`, the producer MUST emit a well-formed empty page (`PAGE_BEGIN` + `SCALAR_SET` with `id="page.empty"` + `PAGE_END`) rather than exiting with a non-zero status.
+**Producer MUST:** emit NDJSON to stdout; include `pri`, `msgid`, `room`, `msg` in every event; ensure `msg` is a complete human-readable line; wrap every stream in `PAGE_BEGIN` / `PAGE_END`; derive `room` from the subcommand path (§6); use only MSGIDs defined in §7; implement `--help`, `--version`, `--status`, and `--list` per §8.1; emit a well-formed empty page (`PAGE_BEGIN` + `SCALAR_SET` with `id="page.empty"` + `PAGE_END`) when a room has no data for `--status` or `--list`, rather than exiting with a non-zero status; encode all output as UTF-8.
 
-**Producer SHOULD:** implement `--quiet`, `--verbose` (§8.2); implement `--dry-run` (§8.3); include `intent` on every `PAGE_BEGIN` — `"query"` for discovery flag streams (`--help`, `--status`, `--list`), `"action"` for command execution streams; design rooms such that `--status` and `--list` are invocable without positional arguments. Rooms SHOULD NOT encode runtime entity identifiers in their room path; entity context is a runtime parameter, not a room identifier.
+**Producer SHOULD:** implement `--quiet`, `--verbose` (§8.2); implement `--dry-run` (§8.3); include `intent` on every `PAGE_BEGIN` — `"query"` for discovery flag streams (`--help`, `--status`, `--list`), `"action"` for command execution streams; design rooms such that `--status` and `--list` are invocable without positional arguments; NOT encode runtime entity identifiers in their room path; entity context is a runtime parameter, not a room identifier.
 
-**Consumer MUST:** parse NDJSON line-by-line; route events per §10 using the `intent` field on `PAGE_BEGIN`; render `msg` as fallback for unknown MSGIDs; ignore unknown MSGIDs and fields without error; map RFC 5424 severity per §4.2; if stdout closes or the process exits before `PAGE_END` is received, synthesise a terminal error state using any partial content and severity already received — a consumer MUST NOT remain in an indeterminate loading state.
+**Consumer MUST:** parse NDJSON line-by-line; route events per §10 using the `intent` field on `PAGE_BEGIN`; render `msg` as fallback for unknown MSGIDs; ignore unknown MSGIDs and fields without error; map RFC 5424 severity per §4.2; synthesize a terminal error state using any partial content received if stdout closes or the process exits before `PAGE_END` — MUST NOT remain in an indeterminate loading state; NOT suppress `dry_run: true` annotations; sanitize string values before rendering in HTML or injection-sensitive contexts.
 
-**Consumer SHOULD:** implement the three-flag protocol (§9); support optional slots (§9).
+**Consumer SHOULD:** implement the three-flag protocol (§9); support optional slots (§9); implement stream size limits.
 
 ---
 
