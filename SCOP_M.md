@@ -114,7 +114,7 @@ REQUIRED. Appears exactly once.
 name         = "scop"
 version      = "0.1.0"
 description  = "File and directory snapshotter"
-scop_version = "0.1.2"
+scop_version = "0.1.2-draft"
 ```
 
 ---
@@ -572,7 +572,7 @@ icon     = ":floppy_disk:"
 
 ### Normative
 
-- **SCOP v0.1.2** — Structured CLI Output Protocol
+- **SCOP v0.1.2-draft** — Structured CLI Output Protocol
 - **TOML v1.0** — toml.io
 - **RFC 2119** — Key words for use in RFCs. Bradner, S. (1997).
 - **GitHub gemoji** — github.com/github/gemoji

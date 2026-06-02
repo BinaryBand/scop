@@ -34,22 +34,6 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 DEFAULT_VERSION = "0.1.0"
 
 
-def _get_version():
-    pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
-    if not pyproject_path.exists():
-        print(f"pyproject.toml not found: {pyproject_path}", file=sys.stderr)
-        return DEFAULT_VERSION
-
-    # Read the version from pyproject.toml
-    try:
-        pyproject_data = toml.load(pyproject_path)
-        version = pyproject_data.get("project", {}).get("version", DEFAULT_VERSION)
-        return version
-    except Exception as e:
-        print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
-        return DEFAULT_VERSION
-
-
 
 def render_templates():
     repo_root = Path(__file__).resolve().parent.parent
@@ -67,12 +51,20 @@ def render_templates():
         keep_trailing_newline=True,
     )
 
+    # Default version; may be overridden by NORTH_STAR.yaml.spec_version
+    version = DEFAULT_VERSION
+
     # Load NORTH_STAR.yaml to generate stable severity rows for the partial.
     severity_rows = []
     north_star_path = repo_root / "static" / "NORTH_STAR.yaml"
     if north_star_path.exists():
         try:
             ns = yaml.safe_load(north_star_path.read_text(encoding='utf-8'))
+            # Use spec_version from NORTH_STAR.yaml if present
+            try:
+                version = ns.get("spec_version", DEFAULT_VERSION)
+            except Exception:
+                version = DEFAULT_VERSION
             sev = ns.get("severity", {})
             values = sev.get("values", {}) or {}
             gui = sev.get("gui_rendering", {}) or {}
@@ -146,8 +138,6 @@ def render_templates():
 
         out_name = tpl_path.name[:-3]  # strip .j2
         out_path = repo_root / out_name
-
-        version = _get_version()
 
         template = env.get_template(tpl_path.name)
         rendered = template.render({"version": version, "severity_rows": severity_rows})
