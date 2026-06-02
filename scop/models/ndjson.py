@@ -35,14 +35,12 @@ GemojiCode = Annotated[
     # Preserve previous semantics: starts/ends with ':' and has no spaces.
     StringConstraints(strict=True, pattern=r"^:[^ ]+:$"),
 ]
-Int = Annotated[int, Field(strict=True)]
 NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
 Flag = Annotated[bool, Field(strict=True)]
 Pri = Annotated[int, Field(strict=True, ge=0, le=191)]
 
 OptText = Optional[Text]
 OptGemojiCode = Optional[GemojiCode]
-OptInt = Optional[Int]
 OptNonNegativeInt = Optional[NonNegativeInt]
 OptFlag = Optional[Flag]
 
@@ -102,12 +100,15 @@ MSGID_MAP: dict[MSGID, tuple[set[str], set[str]]] = {
     "TABLE_END": ({"id"}, set()),
 }
 
-PROCESS_MSGIDS = ("PROCESS_BEGIN", "PROCESS_UPDATE")
 HELP_LIST_MSGIDS = ("LIST_APPEND", "LIST_UPDATE")
 
 DISPLAY_HINT_ALLOWED_BY_MSGID: dict[str, set[str]] = {
     "SCALAR_SET": {"badge"},
     "TABLE_DECLARE": {"table", "chart", "cards"},
+}
+DISPLAY_HINT_ERROR_BY_MSGID: dict[str, str] = {
+    "SCALAR_SET": "Producers MUST NOT use display_hint values not defined in this spec ('badge')",
+    "TABLE_DECLARE": "display_hint for TABLE_DECLARE must be 'table', 'chart', or 'cards'",
 }
 
 
@@ -284,16 +285,14 @@ class NDJSONEvent(BaseModel):
         return self
 
     def _provided_vocabulary_fields(self) -> set[str]:
-        provided_vocabulary_fields: set[str] = set()
         # model_fields is a class-level attribute; access it from the class to avoid
         # Pydantic deprecation warnings about instance-level access.
         cls_fields = type(self).model_fields
-        for field_name in self.model_fields_set:
-            if getattr(self, field_name) is not None:
-                field_info = cls_fields[field_name]
-                json_key = field_info.alias if field_info.alias else field_name
-                provided_vocabulary_fields.add(json_key)
-        return provided_vocabulary_fields
+        return {
+            (cls_fields[field_name].alias or field_name)
+            for field_name in self.model_fields_set
+            if getattr(self, field_name) is not None
+        }
 
     def _validate_scalar_set_value_matrix(self) -> None:
         if self.msgid != "SCALAR_SET":
@@ -331,16 +330,8 @@ class NDJSONEvent(BaseModel):
         allowed = DISPLAY_HINT_ALLOWED_BY_MSGID.get(self.msgid)
         if allowed is None:
             return
-
-        if self.msgid == "SCALAR_SET" and self.display_hint not in allowed:
-            raise ValueError(
-                "Producers MUST NOT use display_hint values not defined in this spec ('badge')"
-            )
-
-        if self.msgid == "TABLE_DECLARE" and self.display_hint not in allowed:
-            raise ValueError(
-                "display_hint for TABLE_DECLARE must be 'table', 'chart', or 'cards'"
-            )
+        if self.display_hint not in allowed:
+            raise ValueError(DISPLAY_HINT_ERROR_BY_MSGID[self.msgid])
 
     def _validate_help_item_structure(self) -> None:
         if self.msgid not in HELP_LIST_MSGIDS or self.id != "help":
