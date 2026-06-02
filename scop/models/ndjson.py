@@ -22,11 +22,18 @@ from pydantic import (
 
 TYPE = Literal["number", "string", "boolean", "duration", "bytes"]
 INTENT = Literal["query", "action"]
+PARAM_KIND = Literal["flag", "positional"]
+HELP_KIND = Literal["action", "group"]
 
 Text = Annotated[str, StringConstraints(strict=True)]
 SingleLineText = Annotated[
     str,
     StringConstraints(strict=True, pattern=r"^[^\r\n]*$"),
+]
+GemojiCode = Annotated[
+    str,
+    # Preserve previous semantics: starts/ends with ':' and has no spaces.
+    StringConstraints(strict=True, pattern=r"^:[^ ]+:$"),
 ]
 Int = Annotated[int, Field(strict=True)]
 NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
@@ -34,6 +41,7 @@ Flag = Annotated[bool, Field(strict=True)]
 Pri = Annotated[int, Field(strict=True, ge=0, le=191)]
 
 OptText = Optional[Text]
+OptGemojiCode = Optional[GemojiCode]
 OptInt = Optional[Int]
 OptNonNegativeInt = Optional[NonNegativeInt]
 OptFlag = Optional[Flag]
@@ -108,6 +116,24 @@ NON_NEGATIVE_FIELD_RULES: dict[str, tuple[str, ...]] = {
 }
 
 
+class HelpParam(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    name: Text
+    kind: PARAM_KIND
+    required: OptFlag = None
+    short: OptText = None
+
+
+class HelpItem(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    command: Text
+    description: Text
+    kind: Optional[HELP_KIND] = None
+    params: Optional[List[HelpParam]] = None
+
+
 class NDJSONEvent(BaseModel):
     """Strict model for a single SCOP NDJSON event.
 
@@ -138,7 +164,7 @@ class NDJSONEvent(BaseModel):
     # Dynamic Vocabulary Fields (§7)
     title: OptText = Field(None, description="PAGE_BEGIN title")
     subtitle: OptText = Field(None, description="PAGE_BEGIN subtitle")
-    icon: OptText = Field(None, description="PAGE_BEGIN icon gemoji code")
+    icon: OptGemojiCode = Field(None, description="PAGE_BEGIN icon gemoji code")
     intent: INTENT = Field(
         "query", description="PAGE_BEGIN view integration strategy (default: 'query')"
     )
@@ -185,6 +211,11 @@ class NDJSONEvent(BaseModel):
         "row_id",
         "app",
     )
+    _MSGID_VALIDATORS: ClassVar[tuple[str, ...]] = (
+        "_validate_scalar_set_value_matrix",
+        "_validate_display_hint_rules",
+        "_validate_help_item_structure",
+    )
 
     @field_validator("pri", mode="before")
     @classmethod
@@ -230,13 +261,9 @@ class NDJSONEvent(BaseModel):
             )
 
         # 3. Contextual Field Verification Rules
-        self._validate_page_begin_icon()
         self._validate_non_negative_process_fields()
-        self._validate_scalar_set_value_matrix()
-        self._validate_display_hint_rules()
-
-        # 4. Dynamic Help-Item Array Serialization Verification (§8.1)
-        self._validate_help_item_structure()
+        for check_name in self._MSGID_VALIDATORS:
+            getattr(self, check_name)()
 
         # 5. Prohibit verbatim duplication: `msg` MUST NOT exactly equal
         # other scalar textual fields (id, label, title, subtitle, command, description, item_id, row_id, app)
@@ -273,19 +300,6 @@ class NDJSONEvent(BaseModel):
                 json_key = field_info.alias if field_info.alias else field_name
                 provided_vocabulary_fields.add(json_key)
         return provided_vocabulary_fields
-
-    def _validate_page_begin_icon(self) -> None:
-        if self.msgid != "PAGE_BEGIN" or self.icon is None:
-            return
-        if not (
-            self.icon.startswith(":")
-            and self.icon.endswith(":")
-            and len(self.icon) > 2
-            and " " not in self.icon
-        ):
-            raise ValueError(
-                "icon field MUST be a GitHub gemoji code of the form :name:"
-            )
 
     def _validate_non_negative_process_fields(self) -> None:
         field_names = NON_NEGATIVE_FIELD_RULES.get(self.msgid, ())
@@ -345,59 +359,47 @@ class NDJSONEvent(BaseModel):
         if self.msgid not in HELP_LIST_MSGIDS or self.id != "help":
             return
 
-        if not isinstance(self.value, dict):
+        try:
+            item = HelpItem.model_validate(self.value)
+        except Exception as exc:
             raise TypeError(
                 "Help item value must be a structural JSON dictionary object"
+            ) from exc
+
+        if not item.params:
+            return
+
+        current_stage = 0  # 0: positional, 1: required flag, 2: optional flag
+        last_name = ""
+
+        for param in item.params:
+            if param.kind != "flag" and param.short is not None:
+                raise ValueError("Param 'short' is valid for kind='flag' only")
+
+            # Calculate implied or explicit parameter requirements
+            p_req = (
+                param.required
+                if param.required is not None
+                else param.kind == "positional"
             )
 
-        v = self.value
-        for req_key in ("command", "description"):
-            if req_key not in v or not isinstance(v[req_key], str):
+            if param.kind == "positional":
+                stage = 0
+            elif param.kind == "flag" and p_req:
+                stage = 1
+            else:
+                stage = 2
+
+            # Strict validation of order matrix rules (§8.1)
+            if stage < current_stage:
                 raise ValueError(
-                    f"Help item value missing required string field '{req_key}'"
+                    "Params ordering violation: positionals MUST precede flags; required flags MUST precede optional flags."
                 )
-
-        if "kind" in v and v["kind"] not in ("action", "group"):
-            raise ValueError("Help item 'kind' must be 'action' or 'group'")
-
-        if "params" in v and v["params"] is not None:
-            if not isinstance(v["params"], list):
-                raise TypeError("Help item 'params' must be an array list")
-
-            current_stage = 0  # 0: positional, 1: required flag, 2: optional flag
-            last_name = ""
-
-            for param in v["params"]:
-                if not isinstance(param, dict):
-                    raise TypeError("Param entry item must be a dictionary object")
-                if "name" not in param or not isinstance(param["name"], str):
-                    raise ValueError("Param entry missing required string field 'name'")
-                if "kind" not in param or param["kind"] not in ("flag", "positional"):
-                    raise ValueError("Param 'kind' must be 'flag' or 'positional'")
-
-                if param["kind"] != "flag" and param.get("short") is not None:
-                    raise ValueError("Param 'short' is valid for kind='flag' only")
-
-                # Calculate implied or explicit parameter requirements
-                p_req = param.get("required", param["kind"] == "positional")
-
-                if param["kind"] == "positional":
-                    stage = 0
-                elif param["kind"] == "flag" and p_req:
-                    stage = 1
-                else:
-                    stage = 2
-
-                # Strict validation of order matrix rules (§8.1)
-                if stage < current_stage:
+            if stage == current_stage:
+                if param.name < last_name:
                     raise ValueError(
-                        "Params ordering violation: positionals MUST precede flags; required flags MUST precede optional flags."
+                        f"Params sorting violation: within each group, parameters must be alphabetical by name. Overlap found: '{param.name}' after '{last_name}'."
                     )
-                if stage == current_stage:
-                    if param["name"] < last_name:
-                        raise ValueError(
-                            f"Params sorting violation: within each group, parameters must be alphabetical by name. Overlap found: '{param['name']}' after '{last_name}'."
-                        )
 
-                current_stage = stage
-                last_name = param["name"]
+            current_stage = stage
+            last_name = param.name
