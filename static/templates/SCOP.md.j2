@@ -312,30 +312,7 @@ Commands
 
 ---
 
-## 10. Auto-Translation Rules
-
-A conforming consumer routes events using this table. No application knowledge is required.
-
-| MSGID / condition | Slot | Notes |
-| --- | --- | --- |
-| `PAGE_BEGIN` where `intent: "query"`, same room | update page | merge slot content; existing slots not covered by this stream persist |
-| `PAGE_BEGIN` where `intent: "query"`, different room | replace page | navigate to new room; all slots replaced |
-| `PAGE_BEGIN` where `intent: "action"` | open activity overlay | activity slot only; all other slots unchanged |
-| `SCALAR_SET` | stats area | stat card |
-| `TABLE_*` | content area | table, grid, or chart |
-| `LIST_*` where `id="help"` | actions area | buttons or command palette |
-| `LIST_*` otherwise | content area | list |
-| `PROCESS_*` | activity indicator | progress bar or spinner |
-| `PAGE_END` where `intent: "query"` | end of stream | slot update complete; page remains visible |
-| `PAGE_END` where `intent: "action"` | end of stream | close activity overlay |
-| `pri` 0-3 | error modal | blocking |
-| `pri` 4 | warning banner | non-blocking |
-| `pri` 5-6 | log area | append |
-| `pri` 7 | suppressed | unless `--verbose` |
-
-Unknown MSGIDs MUST be routed to the log area using `msg`. Unknown fields MUST be ignored.
-
-Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. A room MAY contain multiple concurrent processes with distinct `id` values active simultaneously; consumers MUST NOT assume a 1:1 mapping between a room and an active process.
+{% include 'partials/consumer_routing.md.j2' %}
 
 ---
 

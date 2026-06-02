@@ -517,45 +517,59 @@ page_template:
 # ────────────────────────────────────────────────────────────────────────────
 consumer_routing:
   routes:
-    - condition: "PAGE_BEGIN, intent=query, same room"
-      action: "update page — merge slot content; existing slots not in this stream persist"
-    - condition: "PAGE_BEGIN, intent=query, different room"
-      action: "replace page — navigate to new room; all slots replaced"
-    - condition: "PAGE_BEGIN, intent=action"
-      action: "open activity overlay — activity slot only; all other slots unchanged"
-    - condition: "SCALAR_SET"
-      slot: stats_area
-    - condition: "TABLE_*"
-      slot: content_area
-    - condition: "LIST_*, id=help"
-      slot: actions_area
-    - condition: "LIST_*, id≠help"
-      slot: content_area
-    - condition: "PROCESS_*"
-      slot: activity_indicator
-    - condition: "PAGE_END, intent=query"
-      action: "end of stream; slot update complete; page remains visible"
-    - condition: "PAGE_END, intent=action"
-      action: "close activity overlay"
-    - condition: "pri 0-3"
-      slot: error_modal
-      blocking: true
-    - condition: "pri 4"
-      slot: warning_banner
-      blocking: false
-    - condition: "pri 5-6"
-      slot: log_area
-    - condition: "pri 7"
-      action: "suppressed by default (see flag_contracts.verbose)"
+    - condition: '`PAGE_BEGIN` where `intent: "query"`, same room'
+      slot: "update page"
+      notes: "merge slot content; existing slots not covered by this stream persist"
+    - condition: '`PAGE_BEGIN` where `intent: "query"`, different room'
+      slot: "replace page"
+      notes: "navigate to new room; all slots replaced"
+    - condition: '`PAGE_BEGIN` where `intent: "action"`'
+      slot: "open activity overlay"
+      notes: "activity slot only; all other slots unchanged"
+    - condition: '`SCALAR_SET`'
+      slot: "stats area"
+      notes: "stat card"
+    - condition: '`TABLE_*`'
+      slot: "content area"
+      notes: "table, grid, or chart"
+    - condition: '`LIST_*` where `id="help"`'
+      slot: "actions area"
+      notes: "buttons or command palette"
+    - condition: '`LIST_*` otherwise'
+      slot: "content area"
+      notes: "list"
+    - condition: '`PROCESS_*`'
+      slot: "activity indicator"
+      notes: "progress bar or spinner"
+    - condition: '`PAGE_END` where `intent: "query"`'
+      slot: "end of stream"
+      notes: "slot update complete; page remains visible"
+    - condition: '`PAGE_END` where `intent: "action"`'
+      slot: "end of stream"
+      notes: "close activity overlay"
+    - condition: '`pri` 0–3'
+      slot: "error modal"
+      notes: "blocking"
+    - condition: '`pri` 4'
+      slot: "warning banner"
+      notes: "non-blocking"
+    - condition: '`pri` 5–6'
+      slot: "log area"
+      notes: "append"
+    - condition: '`pri` 7'
+      slot: "suppressed"
+      notes: "unless `--verbose`"
     - condition: "unknown MSGID"
-      action: "route to log_area using msg"
+      prose: true
+      notes: 'route to log area using `msg`'
     - condition: "unknown field"
-      action: "ignore without error"
+      prose: true
+      notes: "ignore without error"
 
   rules:
     - MUST: "maintain independent slot state per id for PROCESS_* events"
     - MUST_NOT: "assume a 1:1 mapping between a room and an active process"
-    - MUST: "if stdout closes or process exits before PAGE_END, synthesise a terminal error state using partial content — MUST NOT remain in indeterminate loading state"
+    - MUST: "if stdout closes or process exits before PAGE_END, synthesize a terminal error state using partial content — MUST NOT remain in indeterminate loading state"
 
 # ────────────────────────────────────────────────────────────────────────────
 # CONFORMANCE CHECKLIST

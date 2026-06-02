@@ -162,11 +162,10 @@ Every stream MUST begin with `PAGE_BEGIN` and end with `PAGE_END`. `PAGE_END.msg
 The `icon` field, when present, MUST be a GitHub gemoji code of the form `:name:` (e.g., `:camera_with_flash:`). Raw Unicode codepoints MUST NOT be used. CLI renderers print or ignore the string as-is; GUI renderers map it to an icon asset.
 
 The `intent` field declares how the consumer MUST integrate this stream into the current view. If omitted, consumers MUST treat it as `"query"`.
-
-| `intent` value | Consumer behaviour                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------------- |
-| `"query"`      | Build or replace the page view. All slots updated. Used for --status, --list, --help, navigation. |
-| `"action"`     | An operation is running. Route PROCESS\_\* to activity slot only. All other slots remain intact.  |
+| `intent` value | Consumer behaviour |
+| --- | --- |
+| `"query"` | Build or replace the page view. All slots updated. Used for --status, --list, --help, navigation. |
+| `"action"` | An operation is running. Route PROCESS\_\* to activity slot only. All other slots remain intact. |
 
 ```json
 {"pri": 6, "msgid": "PAGE_BEGIN", "room": "snapshot", "title": "Snapshots", "subtitle": "Manage and compare snapshots", "icon": ":camera_with_flash:", "intent": "query", "msg": "=== Snapshots ==="}
@@ -456,9 +455,9 @@ A conforming consumer routes events using this table. No application knowledge i
 | `PROCESS_*`                                          | activity indicator    | progress bar or spinner                                               |
 | `PAGE_END` where `intent: "query"`                   | end of stream         | slot update complete; page remains visible                            |
 | `PAGE_END` where `intent: "action"`                  | end of stream         | close activity overlay                                                |
-| `pri` 0-3                                            | error modal           | blocking                                                              |
+| `pri` 0–3                                            | error modal           | blocking                                                              |
 | `pri` 4                                              | warning banner        | non-blocking                                                          |
-| `pri` 5-6                                            | log area              | append                                                                |
+| `pri` 5–6                                            | log area              | append                                                                |
 | `pri` 7                                              | suppressed            | unless `--verbose`                                                    |
 
 Unknown MSGIDs MUST be routed to the log area using `msg`. Unknown fields MUST be ignored.

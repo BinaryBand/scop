@@ -1,0 +1,17 @@
+{%- set cr = north_star.consumer_routing -%}
+## 10. Auto-Translation Rules
+
+A conforming consumer routes events using this table. No application knowledge is required.
+
+| MSGID / condition | Slot | Notes |
+| --- | --- | --- |
+{%- for route in cr.routes %}
+{%- if not route.prose %}
+| {{ route.condition }} | {{ route.slot }} | {{ route.notes }} |
+{%- endif %}
+{%- endfor %}
+
+
+Unknown MSGIDs MUST be routed to the log area using `msg`. Unknown fields MUST be ignored.
+
+Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. A room MAY contain multiple concurrent processes with distinct `id` values active simultaneously; consumers MUST NOT assume a 1:1 mapping between a room and an active process.
