@@ -36,5 +36,5 @@ def test_ruff_format_check():
 def test_type_check():
     _ensure_tool("ty")
     # Type check across repository
-    cp = _run([sys.executable, "-m", "ty", "."])
+    cp = _run([sys.executable, "-m", "ty", "check"])
     assert cp.returncode == 0, "Type checker found issues"
