@@ -22,18 +22,16 @@
       }
     ]
   },
-  "markdownlint": {
-    "default": true,
-    "MD013": false,
-    "MD024": {
-      "siblings_only": true
-    },
-    "MD046": {
-      "style": "fenced"
-    },
-    "MD060": {
-      "style": "aligned",
-      "aligned_delimiter": true
+  "markdownlint-cli2": {
+    "config": {
+      "default": true,
+      "MD013": false,
+      "MD024": {
+        "siblings_only": true
+      },
+      "MD046": {
+        "style": "fenced"
+      }
     }
   }
 }

@@ -31,6 +31,7 @@ The `icon` field, when present, MUST be a GitHub gemoji code of the form `:name:
 The `intent` field declares how the consumer MUST integrate this stream into the current view. If omitted, consumers MUST treat it as `"query"`.
 
 {%- set intent_def = msgids.PAGE_BEGIN.fields.intent %}
+
 | `intent` value | Consumer behaviour |
 | --- | --- |
 {%- for value, behaviour in intent_def.semantics.items() %}

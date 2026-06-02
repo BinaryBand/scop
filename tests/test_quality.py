@@ -19,6 +19,14 @@ def _ensure_tool(name):
         pytest.skip()
 
 
+def _npx():
+    """Return the npx executable path, or skip the test if npx is not found."""
+    path = shutil.which("npx")
+    if path is None:
+        pytest.skip()
+    return path
+
+
 def test_ruff_check():
     _ensure_tool("ruff")
     # Lint check across repository
@@ -38,3 +46,25 @@ def test_type_check():
     # Type check across repository
     cp = _run([sys.executable, "-m", "ty", "check"])
     assert cp.returncode == 0, "Type checker found issues"
+
+
+def test_prettier_md_check():
+    cp = _run([_npx(), "prettier", "--check", "*.md"])
+    assert cp.returncode == 0, (
+        f"prettier found formatting issues (run `npx prettier --write *.md`)\n{cp.stdout}"
+    )
+
+
+def test_markdownlint():
+    cp = _run(
+        [
+            _npx(),
+            "markdownlint-cli2",
+            "--config",
+            "package.json",
+            "--configPointer",
+            "/markdownlint-cli2/config",
+            "*.md",
+        ]
+    )
+    assert cp.returncode == 0, f"markdownlint found issues\n{cp.stdout}{cp.stderr}"
