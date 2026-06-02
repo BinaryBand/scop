@@ -184,9 +184,12 @@ class NDJSONEvent(BaseModel):
     def _validate_spec_conformance(self) -> NDJSONEvent:
         # 1. Isolate vocabulary fields while converting Python attribute names to JSON aliases
         provided_vocabulary_fields = set()
+        # model_fields is a class-level attribute; access it from the class to avoid
+        # Pydantic deprecation warnings about instance-level access.
+        cls_fields = type(self).model_fields
         for field_name in self.model_fields_set:
             if getattr(self, field_name) is not None:
-                field_info = self.model_fields[field_name]
+                field_info = cls_fields[field_name]
                 json_key = field_info.alias if field_info.alias else field_name
                 provided_vocabulary_fields.add(json_key)
 

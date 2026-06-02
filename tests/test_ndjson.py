@@ -241,7 +241,10 @@ def test_model_is_frozen():
 
 @given(
     st.integers(min_value=0, max_value=191),
-    st.text(alphabet=string.ascii_letters + string.digits + " ", min_size=1),
+    # Restrict to strings that are not solely whitespace so `msg.strip()` is non-empty
+    st.text(alphabet=string.ascii_letters + string.digits + " ", min_size=1).filter(
+        lambda s: s.strip() != ""
+    ),
 )
 def test_hypothesis_random_valid_pri_and_msg(pri, msg):
     # Quick property-based check that valid pri/msg combinations validate
