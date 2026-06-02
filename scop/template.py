@@ -141,7 +141,7 @@ def render_templates():
         for f in all_flags:
             long = f.get("long") if isinstance(f, dict) else str(f)
             short = f.get("short") if isinstance(f, dict) else None
-            short_display = f"`{short}`" if short else ""
+            short_display = f"`{short}`" if short else "`-`"
             category = f.get("category", "") if isinstance(f, dict) else ""
             is_pending = isinstance(f, dict) and f.get("status") and "pending" in str(f.get("status"))
             marker = " †" if is_pending else ""

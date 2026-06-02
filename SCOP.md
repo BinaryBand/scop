@@ -70,9 +70,9 @@ Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): s
 | Flag | Short | Category |
 | --- | --- | --- |
 | `--help` | `-h` | query |
-| `--version` |  | query |
+| `--version` | `-` | query |
 | `--list` | `-l` | query |
-| `--status` |  | query |
+| `--status` | `-` | query |
 | `--all` | `-a` | mode |
 | `--quiet` | `-q` | mode |
 | `--verbose` | `-v` | mode |
