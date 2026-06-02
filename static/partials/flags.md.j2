@@ -1,0 +1,12 @@
+{%- set fc = north_star.get('flag_contracts', {}) -%}
+{%- set all_flags = fc.get('all_flags', []) -%}
+
+| Flag | Short | Category |
+| --- | --- | --- |
+{%- for f in all_flags %}
+| `{{ f.long }}` | {%- if f.short %}`{{ f.short }}`{%- else %} {%- endif %} | {{ f.category }}{%- if f.status %} ({{ f.status }}){%- endif %} |
+{%- endfor %}
+
+{%- if fc -%}
+Details for specific flag contracts appear in §8 (GNU Flag Contract).
+{%- endif %}

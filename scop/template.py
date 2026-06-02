@@ -56,6 +56,7 @@ def render_templates():
 
     # Load NORTH_STAR.yaml to generate stable severity rows for the partial.
     severity_rows = []
+    ns = {}
     north_star_path = repo_root / "static" / "NORTH_STAR.yaml"
     if north_star_path.exists():
         try:
@@ -140,7 +141,7 @@ def render_templates():
         out_path = repo_root / out_name
 
         template = env.get_template(tpl_path.name)
-        rendered = template.render({"version": version, "severity_rows": severity_rows})
+        rendered = template.render({"version": version, "severity_rows": severity_rows, "north_star": ns})
 
         out_path.write_text(rendered, encoding='utf-8')
         written.append(out_path)

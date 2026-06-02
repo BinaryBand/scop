@@ -67,19 +67,19 @@ SCOP is a composition, not a replacement:
 
 Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags; each flag's event contract is defined in §8.
 
-| Flag | Short | Meaning |
+| Flag | Short | Category |
 | --- | --- | --- |
-| `--help` | `-h` | Emit available commands and flags; exit |
-| `--version` | | Emit version information; exit |
-| `--list` | `-l` | List items without taking other action |
-| `--status` | | Emit current application state |
-| `--all` | `-a` | Expand scope of list or status output |
-| `--quiet` | `-q` | Suppress non-essential output |
-| `--verbose` | `-v` | Include debug-level output |
-| `--dry-run` | `-n` | Execute without side effects |
-| `--recursive` | `-r` | Operate recursively |
-| `--force` | `-f` | Override safety checks |
-| `--output` | `-o` | Redirect output to file |
+| `--help` |`-h` | query |
+| `--version` | | query |
+| `--list` |`-l` | query |
+| `--status` | | query |
+| `--all` |`-a` | mode |
+| `--quiet` |`-q` | mode |
+| `--verbose` |`-v` | mode |
+| `--dry-run` |`-n` | modifier |
+| `--recursive` |`-r` | modifier |
+| `--force` |`-f` | modifier |
+| `--output` |`-o` | other (pending_contract) |Details for specific flag contracts appear in §8 (GNU Flag Contract).
 
 Inverse flags (`--no-quiet`, `--no-recursive`, etc.) SHOULD be supported where the positive flag is supported.
 
