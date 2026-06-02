@@ -8,6 +8,7 @@ No template variables are provided (empty context) for this initial setup.
 """
 
 from pathlib import Path
+import subprocess
 import sys
 import yaml
 
@@ -171,6 +172,24 @@ def render_templates():
 
     if not written:
         print("No templates rendered.")
+        return 0
+
+    import shutil
+
+    npx = shutil.which("npx")
+    if npx is None:
+        print("prettier: npx not found, skipping format step", file=sys.stderr)
+        return 0
+
+    paths = [str(p) for p in written]
+    result = subprocess.run(
+        [npx, "--yes", "prettier", "--write", *paths],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print(f"prettier: {result.stderr.strip()}", file=sys.stderr)
+        return result.returncode
     return 0
 
 
