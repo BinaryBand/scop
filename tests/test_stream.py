@@ -8,7 +8,7 @@ Strategy
   - apply one targeted mutation (wrong order, missing wrapper, schema mismatch,
     duplicate id, orphaned lifecycle event) and assert SCOPStreamError is raised.
 
-All generated pri values use SCOP facility 16 (128–135).
+All generated pri values use SCOP facility 16 (128-135).
 All generated strings exclude newlines, carriage returns, and empty/whitespace.
 """
 
