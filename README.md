@@ -1,6 +1,7 @@
 # README
 
 ```bash
-poetry install      # Setup
-poetry run template # Render
+poetry config virtualenvs.in-project true --local   # Configure
+poetry install                                      # Setup
+poetry run template                                 # Render
 ```
