@@ -261,7 +261,7 @@ Query flags produce data output and exit. Each response MUST be wrapped in `PAGE
 
 **`--help` / `-h`**
 
-```
+```text
 PAGE_BEGIN (room: current, title: command name, intent: "query")
 LIST_DECLARE (id: "help", ordered: false)
 LIST_APPEND ×n (value: help-item object — see schema below)
