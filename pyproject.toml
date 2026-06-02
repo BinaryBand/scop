@@ -19,3 +19,8 @@ build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
 template = "scop.template:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0"
+ruff = "^0.13"
+ty = "0.0.40"

@@ -1,5 +1,3 @@
-
-
 """Render Jinja2 Markdown templates from static/templates to repository root.
 
 Usage: python scripts/template.py
@@ -10,21 +8,6 @@ No template variables are provided (empty context) for this initial setup.
 """
 
 from pathlib import Path
-import toml
-import sys
-
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-"""Render Jinja2 Markdown templates from static/templates to repository root.
-
-Usage: python scripts/template.py
-
-This renders all files matching `static/templates/*.md.j2` and writes the
-rendered output to the repository root with the `.j2` suffix removed.
-No template variables are provided (empty context) for this initial setup.
-"""
-
-from pathlib import Path
-import toml
 import sys
 import yaml
 
@@ -32,7 +15,6 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
 DEFAULT_VERSION = "0.1.0"
-
 
 
 def render_templates():
@@ -60,7 +42,7 @@ def render_templates():
     north_star_path = repo_root / "static" / "NORTH_STAR.yaml"
     if north_star_path.exists():
         try:
-            ns = yaml.safe_load(north_star_path.read_text(encoding='utf-8'))
+            ns = yaml.safe_load(north_star_path.read_text(encoding="utf-8"))
             # Use spec_version from NORTH_STAR.yaml if present
             try:
                 version = ns.get("spec_version", DEFAULT_VERSION)
@@ -121,7 +103,9 @@ def render_templates():
             for code in sorted(all_codes):
                 name = values.get(code, values.get(str(code), f"PRI {code}"))
                 rendering = code_to_render.get(code, "")
-                severity_rows.append({"code": code, "name": name, "rendering": rendering})
+                severity_rows.append(
+                    {"code": code, "name": name, "rendering": rendering}
+                )
             # Override DEBUG rendering to reference the flag contract section
             for r in severity_rows:
                 if r.get("code") == 7:
@@ -143,14 +127,20 @@ def render_templates():
             short = f.get("short") if isinstance(f, dict) else None
             short_display = f"`{short}`" if short else "`-`"
             category = f.get("category", "") if isinstance(f, dict) else ""
-            is_pending = isinstance(f, dict) and f.get("status") and "pending" in str(f.get("status"))
+            is_pending = (
+                isinstance(f, dict)
+                and f.get("status")
+                and "pending" in str(f.get("status"))
+            )
             marker = " †" if is_pending else ""
             if is_pending:
                 pending_exists = True
             lines.append(f"| `{long}` | {short_display} | {category}{marker} |")
         flags_table = "\n".join(lines)
         if pending_exists:
-            flags_table = flags_table + "\n\n*† Contract not yet defined; see pending additions.*"
+            flags_table = (
+                flags_table + "\n\n*† Contract not yet defined; see pending additions.*"
+            )
     except Exception:
         flags_table = ""
 
@@ -159,16 +149,23 @@ def render_templates():
 
     for tpl_path in templates_dir.glob(pattern):
         # Only process files that look like markdown templates (*.md.j2)
-        if not tpl_path.name.endswith('.j2'):
+        if not tpl_path.name.endswith(".j2"):
             continue
 
         out_name = tpl_path.name[:-3]  # strip .j2
         out_path = repo_root / out_name
 
         template = env.get_template(tpl_path.name)
-        rendered = template.render({"version": version, "severity_rows": severity_rows, "north_star": ns, "flags_table": flags_table})
+        rendered = template.render(
+            {
+                "version": version,
+                "severity_rows": severity_rows,
+                "north_star": ns,
+                "flags_table": flags_table,
+            }
+        )
 
-        out_path.write_text(rendered, encoding='utf-8')
+        out_path.write_text(rendered, encoding="utf-8")
         written.append(out_path)
         print(f"Wrote: {out_path}")
 
