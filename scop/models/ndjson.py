@@ -98,8 +98,8 @@ class NDJSONEvent(BaseModel):
     title: Optional[str] = Field(None, description="PAGE_BEGIN title")
     subtitle: Optional[str] = Field(None, description="PAGE_BEGIN subtitle")
     icon: Optional[str] = Field(None, description="PAGE_BEGIN icon gemoji code")
-    intent: Optional[Literal["query", "action"]] = Field(
-        None, description="PAGE_BEGIN view integration strategy"
+    intent: Literal["query", "action"] = Field(
+        "query", description="PAGE_BEGIN view integration strategy (default: 'query')"
     )
 
     id: Optional[str] = Field(
@@ -156,6 +156,10 @@ class NDJSONEvent(BaseModel):
             raise ValueError("pri must be non-negative")
         if v > 191:
             raise ValueError("pri must be between 0 and 191 inclusive per RFC 5424")
+        # SCOP uses facility 16 per spec — enforce facility bits (facility = pri // 8)
+        facility = v // 8
+        if facility != 16:
+            raise ValueError("pri facility must be 16 for SCOP events")
         return v
 
     @field_validator("msg", mode="before")
@@ -347,5 +351,35 @@ class NDJSONEvent(BaseModel):
 
                     current_stage = stage
                     last_name = param["name"]
+
+        # 5. Prohibit verbatim duplication: `msg` MUST NOT exactly equal
+        # other scalar textual fields (id, label, title, subtitle, command, description, item_id, row_id, app)
+        for fname in (
+            "id",
+            "label",
+            "title",
+            "subtitle",
+            "item_id",
+            "row_id",
+            "app",
+        ):
+            val = getattr(self, fname, None)
+            if isinstance(val, str) and val == self.msg:
+                raise ValueError(f"msg must not verbatim duplicate field '{fname}'")
+
+        # Additionally check help-item inner fields when present
+        if (
+            self.msgid in ("LIST_APPEND", "LIST_UPDATE")
+            and self.id == "help"
+            and isinstance(self.value, dict)
+        ):
+            cmd = self.value.get("command")
+            desc = self.value.get("description")
+            if isinstance(cmd, str) and cmd == self.msg:
+                raise ValueError("msg must not verbatim duplicate help-item 'command'")
+            if isinstance(desc, str) and desc == self.msg:
+                raise ValueError(
+                    "msg must not verbatim duplicate help-item 'description'"
+                )
 
         return self

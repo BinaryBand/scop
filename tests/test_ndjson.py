@@ -17,7 +17,8 @@ from scop.models.ndjson import MSGID, NDJSONEvent
 
 
 def base_event(msgid: MSGID = "SCALAR_SET", room=None, msg: str = "ok") -> dict:
-    return {"pri": 6, "msgid": msgid, "room": room, "msg": msg}
+    # Use SCOP facility 16 (pri range 128..135 for severity 0..7); default severity 6 -> pri=128+6=134
+    return {"pri": 134, "msgid": msgid, "room": room, "msg": msg}
 
 
 def test_valid_scalar_set_minimal_and_json_roundtrip():
@@ -240,7 +241,7 @@ def test_model_is_frozen():
 
 
 @given(
-    st.integers(min_value=0, max_value=191),
+    st.integers(min_value=128, max_value=135),
     # Restrict to strings that are not solely whitespace so `msg.strip()` is non-empty
     st.text(alphabet=string.ascii_letters + string.digits + " ", min_size=1).filter(
         lambda s: s.strip() != ""
@@ -249,5 +250,6 @@ def test_model_is_frozen():
 def test_hypothesis_random_valid_pri_and_msg(pri, msg):
     # Quick property-based check that valid pri/msg combinations validate
     ev = {"pri": pri, "msgid": "SCALAR_SET", "room": None, "msg": msg}
-    ev.update({"id": "x", "label": "x", "value": 1, "type": "number"})
+    # Use fixed id/label values so they don't accidentally duplicate the random msg
+    ev.update({"id": "fixed-id", "label": "fixed-label", "value": 1, "type": "number"})
     NDJSONEvent.model_validate(ev)

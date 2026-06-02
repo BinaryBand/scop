@@ -20,7 +20,7 @@ from scop.models.ndjson import NDJSONEvent
 
 # --- shared building blocks -------------------------------------------------
 
-PRI = st.integers(min_value=0, max_value=191)
+PRI = st.integers(min_value=128, max_value=135)
 # Disallow newline characters and whitespace-only strings for `msg` and similar fields
 NON_EMPTY_STR = st.text(min_size=1).filter(
     lambda s: s.strip() != "" and "\n" not in s and "\r" not in s
@@ -60,10 +60,12 @@ def scalar_value_strategy_for(t: str):
 def scalar_set_builder(draw):
     t = draw(st.sampled_from(["bytes", "duration", "number", "string", "boolean"]))
     base = draw(base_msg("SCALAR_SET"))
+    # ensure id/label don't verbatim duplicate msg
+    msg = base["msg"]
     base.update(
         {
-            "id": draw(NON_EMPTY_STR),
-            "label": draw(NON_EMPTY_STR),
+            "id": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
+            "label": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
             "type": t,
             "value": draw(scalar_value_strategy_for(t)),
         }
@@ -161,11 +163,16 @@ def help_item_builder(draw):
 @st.composite
 def help_event_builder(draw):
     base = draw(base_msg("LIST_APPEND"))
+    msg = base["msg"]
+    # Ensure item_id and help fields don't duplicate msg
+    command = draw(NON_EMPTY_STR.filter(lambda s: s != msg))
+    description = draw(NON_EMPTY_STR.filter(lambda s: s != msg))
+    params = draw(help_params())
     base.update(
         {
             "id": "help",
-            "item_id": draw(NON_EMPTY_STR),
-            "value": draw(help_item_builder()),
+            "item_id": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
+            "value": {"command": command, "description": description, "params": params},
         }
     )
     return base
@@ -198,9 +205,14 @@ def test_help_item_ordering_violations_rejected(ev: Dict[str, Any]):
 @st.composite
 def table_declare_builder(draw):
     base = draw(base_msg("TABLE_DECLARE"))
+    msg = base["msg"]
     cols = draw(st.lists(NON_EMPTY_STR, min_size=1, max_size=4))
     base.update(
-        {"id": draw(NON_EMPTY_STR), "label": draw(NON_EMPTY_STR), "schema": cols}
+        {
+            "id": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
+            "label": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
+            "schema": cols,
+        }
     )
     return base
 
@@ -243,7 +255,13 @@ def test_table_declare_and_row_roundtrip(decl: Dict[str, Any]):
 @st.composite
 def process_begin_builder(draw):
     base = draw(base_msg("PROCESS_BEGIN"))
-    base.update({"id": draw(NON_EMPTY_STR), "label": draw(NON_EMPTY_STR)})
+    msg = base["msg"]
+    base.update(
+        {
+            "id": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
+            "label": draw(NON_EMPTY_STR.filter(lambda s: s != msg)),
+        }
+    )
     if draw(st.booleans()):
         base["total"] = draw(st.integers(min_value=0, max_value=10**6))
     return base
@@ -269,7 +287,8 @@ def test_process_begin_mutate_invalid_total(pb: Dict[str, Any]):
 @st.composite
 def page_begin_builder(draw):
     base = draw(base_msg("PAGE_BEGIN"))
-    base.update({"title": draw(NON_EMPTY_STR)})
+    msg = base["msg"]
+    base.update({"title": draw(NON_EMPTY_STR.filter(lambda s: s != msg))})
     if draw(st.booleans()):
         base["icon"] = draw(st.sampled_from([":ok:", ":smile:", ":rocket:"]))
     return base
