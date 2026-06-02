@@ -9,9 +9,11 @@ basic semantic validations are enforced (single-line `msg`, non-negative
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, ClassVar, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+TYPE = Literal["number", "string", "boolean", "duration", "bytes"]
 
 MSGID = Literal[
     "PAGE_BEGIN",
@@ -64,6 +66,19 @@ MSGID_MAP: dict[MSGID, tuple[set[str], set[str]]] = {
     "TABLE_ROW": ({"id", "row_id", "values"}, set()),
     "TABLE_UPDATE": ({"id", "row_id", "values"}, set()),
     "TABLE_END": ({"id"}, set()),
+}
+
+PROCESS_MSGIDS = ("PROCESS_BEGIN", "PROCESS_UPDATE")
+HELP_LIST_MSGIDS = ("LIST_APPEND", "LIST_UPDATE")
+
+DISPLAY_HINT_ALLOWED_BY_MSGID: dict[str, set[str]] = {
+    "SCALAR_SET": {"badge"},
+    "TABLE_DECLARE": {"table", "chart", "cards"},
+}
+
+NON_NEGATIVE_FIELD_RULES: dict[str, tuple[str, ...]] = {
+    "PROCESS_BEGIN": ("total",),
+    "PROCESS_UPDATE": ("total", "current"),
 }
 
 
@@ -119,9 +134,7 @@ class NDJSONEvent(BaseModel):
         None, description="Flag indicating forced modifier context"
     )
 
-    type: Optional[Literal["number", "string", "boolean", "duration", "bytes"]] = Field(
-        None, description="Abstract scalar value type"
-    )
+    type: Optional[TYPE] = Field(None, description="Abstract scalar value type")
     value: Optional[Any] = Field(
         None, description="Scalar or structural entry value representation"
     )
@@ -143,6 +156,16 @@ class NDJSONEvent(BaseModel):
     values: Optional[Dict[str, Any]] = Field(
         None,
         description="Relational data dictionary mapping schema keys to cell values",
+    )
+
+    _TEXT_DUPLICATE_FIELDS: ClassVar[tuple[str, ...]] = (
+        "id",
+        "label",
+        "title",
+        "subtitle",
+        "item_id",
+        "row_id",
+        "app",
     )
 
     @field_validator("pri", mode="before")
@@ -187,15 +210,7 @@ class NDJSONEvent(BaseModel):
     @model_validator(mode="after")
     def _validate_spec_conformance(self) -> NDJSONEvent:
         # 1. Isolate vocabulary fields while converting Python attribute names to JSON aliases
-        provided_vocabulary_fields = set()
-        # model_fields is a class-level attribute; access it from the class to avoid
-        # Pydantic deprecation warnings about instance-level access.
-        cls_fields = type(self).model_fields
-        for field_name in self.model_fields_set:
-            if getattr(self, field_name) is not None:
-                field_info = cls_fields[field_name]
-                json_key = field_info.alias if field_info.alias else field_name
-                provided_vocabulary_fields.add(json_key)
+        provided_vocabulary_fields = self._provided_vocabulary_fields()
 
         core_fields = {"pri", "msgid", "room", "msg", "ts", "app", "pid"}
         provided_vocabulary_fields -= core_fields
@@ -223,146 +238,17 @@ class NDJSONEvent(BaseModel):
             )
 
         # 3. Contextual Field Verification Rules
-        if self.msgid == "PAGE_BEGIN":
-            if self.icon is not None:
-                if not (
-                    self.icon.startswith(":")
-                    and self.icon.endswith(":")
-                    and len(self.icon) > 2
-                    and " " not in self.icon
-                ):
-                    raise ValueError(
-                        "icon field MUST be a GitHub gemoji code of the form :name:"
-                    )
-
-        elif self.msgid in ("PROCESS_BEGIN", "PROCESS_UPDATE"):
-            if self.total is not None and self.total < 0:
-                raise ValueError("total must be non-negative")
-            if (
-                self.msgid == "PROCESS_UPDATE"
-                and self.current is not None
-                and self.current < 0
-            ):
-                raise ValueError("current must be non-negative")
-
-        elif self.msgid == "SCALAR_SET":
-            t, v = self.type, self.value
-            if t == "bytes":
-                if isinstance(v, bool) or not isinstance(v, int) or v < 0:
-                    raise TypeError(
-                        "For type='bytes', value MUST be a non-negative JSON integer absolute byte count"
-                    )
-            elif t == "duration":
-                if not isinstance(v, str):
-                    raise TypeError(
-                        "For type='duration', value MUST be an ISO 8601 duration string"
-                    )
-                if not v.startswith("P") or len(v) < 2:
-                    raise ValueError(
-                        "For type='duration', value MUST be a valid ISO 8601 duration string (e.g. 'PT1M30S')"
-                    )
-            elif t == "number":
-                if isinstance(v, bool) or not isinstance(v, (int, float)):
-                    raise TypeError(
-                        "For type='number', value MUST be an integer or float"
-                    )
-            elif t == "string":
-                if not isinstance(v, str):
-                    raise TypeError("For type='string', value MUST be a string")
-            elif t == "boolean":
-                if not isinstance(v, bool):
-                    raise TypeError("For type='boolean', value MUST be a boolean")
-
-            if self.display_hint is not None and self.display_hint != "badge":
-                raise ValueError(
-                    "Producers MUST NOT use display_hint values not defined in this spec ('badge')"
-                )
-
-        elif self.msgid == "TABLE_DECLARE":
-            if self.display_hint is not None and self.display_hint not in (
-                "table",
-                "chart",
-                "cards",
-            ):
-                raise ValueError(
-                    "display_hint for TABLE_DECLARE must be 'table', 'chart', or 'cards'"
-                )
+        self._validate_page_begin_icon()
+        self._validate_non_negative_process_fields()
+        self._validate_scalar_set_value_matrix()
+        self._validate_display_hint_rules()
 
         # 4. Dynamic Help-Item Array Serialization Verification (§8.1)
-        elif self.msgid in ("LIST_APPEND", "LIST_UPDATE") and self.id == "help":
-            if not isinstance(self.value, dict):
-                raise TypeError(
-                    "Help item value must be a structural JSON dictionary object"
-                )
-
-            v = self.value
-            for req_key in ("command", "description"):
-                if req_key not in v or not isinstance(v[req_key], str):
-                    raise ValueError(
-                        f"Help item value missing required string field '{req_key}'"
-                    )
-
-            if "kind" in v and v["kind"] not in ("action", "group"):
-                raise ValueError("Help item 'kind' must be 'action' or 'group'")
-
-            if "params" in v and v["params"] is not None:
-                if not isinstance(v["params"], list):
-                    raise TypeError("Help item 'params' must be an array list")
-
-                current_stage = 0  # 0: positional, 1: required flag, 2: optional flag
-                last_name = ""
-
-                for param in v["params"]:
-                    if not isinstance(param, dict):
-                        raise TypeError("Param entry item must be a dictionary object")
-                    if "name" not in param or not isinstance(param["name"], str):
-                        raise ValueError(
-                            "Param entry missing required string field 'name'"
-                        )
-                    if "kind" not in param or param["kind"] not in (
-                        "flag",
-                        "positional",
-                    ):
-                        raise ValueError("Param 'kind' must be 'flag' or 'positional'")
-
-                    if param["kind"] != "flag" and param.get("short") is not None:
-                        raise ValueError("Param 'short' is valid for kind='flag' only")
-
-                    # Calculate implied or explicit parameter requirements
-                    p_req = param.get("required", param["kind"] == "positional")
-
-                    if param["kind"] == "positional":
-                        stage = 0
-                    elif param["kind"] == "flag" and p_req:
-                        stage = 1
-                    else:
-                        stage = 2
-
-                    # Strict validation of order matrix rules (§8.1)
-                    if stage < current_stage:
-                        raise ValueError(
-                            "Params ordering violation: positionals MUST precede flags; required flags MUST precede optional flags."
-                        )
-                    if stage == current_stage:
-                        if param["name"] < last_name:
-                            raise ValueError(
-                                f"Params sorting violation: within each group, parameters must be alphabetical by name. Overlap found: '{param['name']}' after '{last_name}'."
-                            )
-
-                    current_stage = stage
-                    last_name = param["name"]
+        self._validate_help_item_structure()
 
         # 5. Prohibit verbatim duplication: `msg` MUST NOT exactly equal
         # other scalar textual fields (id, label, title, subtitle, command, description, item_id, row_id, app)
-        for fname in (
-            "id",
-            "label",
-            "title",
-            "subtitle",
-            "item_id",
-            "row_id",
-            "app",
-        ):
+        for fname in self._TEXT_DUPLICATE_FIELDS:
             val = getattr(self, fname, None)
             if isinstance(val, str) and val == self.msg:
                 raise ValueError(f"msg must not verbatim duplicate field '{fname}'")
@@ -383,3 +269,143 @@ class NDJSONEvent(BaseModel):
                 )
 
         return self
+
+    def _provided_vocabulary_fields(self) -> set[str]:
+        provided_vocabulary_fields: set[str] = set()
+        # model_fields is a class-level attribute; access it from the class to avoid
+        # Pydantic deprecation warnings about instance-level access.
+        cls_fields = type(self).model_fields
+        for field_name in self.model_fields_set:
+            if getattr(self, field_name) is not None:
+                field_info = cls_fields[field_name]
+                json_key = field_info.alias if field_info.alias else field_name
+                provided_vocabulary_fields.add(json_key)
+        return provided_vocabulary_fields
+
+    def _validate_page_begin_icon(self) -> None:
+        if self.msgid != "PAGE_BEGIN" or self.icon is None:
+            return
+        if not (
+            self.icon.startswith(":")
+            and self.icon.endswith(":")
+            and len(self.icon) > 2
+            and " " not in self.icon
+        ):
+            raise ValueError(
+                "icon field MUST be a GitHub gemoji code of the form :name:"
+            )
+
+    def _validate_non_negative_process_fields(self) -> None:
+        field_names = NON_NEGATIVE_FIELD_RULES.get(self.msgid, ())
+        for name in field_names:
+            value = getattr(self, name)
+            if value is not None and value < 0:
+                raise ValueError(f"{name} must be non-negative")
+
+    def _validate_scalar_set_value_matrix(self) -> None:
+        if self.msgid != "SCALAR_SET":
+            return
+
+        t, v = self.type, self.value
+        if t == "bytes":
+            if isinstance(v, bool) or not isinstance(v, int) or v < 0:
+                raise TypeError(
+                    "For type='bytes', value MUST be a non-negative JSON integer absolute byte count"
+                )
+        elif t == "duration":
+            if not isinstance(v, str):
+                raise TypeError(
+                    "For type='duration', value MUST be an ISO 8601 duration string"
+                )
+            if not v.startswith("P") or len(v) < 2:
+                raise ValueError(
+                    "For type='duration', value MUST be a valid ISO 8601 duration string (e.g. 'PT1M30S')"
+                )
+        elif t == "number":
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                raise TypeError("For type='number', value MUST be an integer or float")
+        elif t == "string":
+            if not isinstance(v, str):
+                raise TypeError("For type='string', value MUST be a string")
+        elif t == "boolean":
+            if not isinstance(v, bool):
+                raise TypeError("For type='boolean', value MUST be a boolean")
+
+    def _validate_display_hint_rules(self) -> None:
+        if self.display_hint is None:
+            return
+
+        allowed = DISPLAY_HINT_ALLOWED_BY_MSGID.get(self.msgid)
+        if allowed is None:
+            return
+
+        if self.msgid == "SCALAR_SET" and self.display_hint not in allowed:
+            raise ValueError(
+                "Producers MUST NOT use display_hint values not defined in this spec ('badge')"
+            )
+
+        if self.msgid == "TABLE_DECLARE" and self.display_hint not in allowed:
+            raise ValueError(
+                "display_hint for TABLE_DECLARE must be 'table', 'chart', or 'cards'"
+            )
+
+    def _validate_help_item_structure(self) -> None:
+        if self.msgid not in HELP_LIST_MSGIDS or self.id != "help":
+            return
+
+        if not isinstance(self.value, dict):
+            raise TypeError(
+                "Help item value must be a structural JSON dictionary object"
+            )
+
+        v = self.value
+        for req_key in ("command", "description"):
+            if req_key not in v or not isinstance(v[req_key], str):
+                raise ValueError(
+                    f"Help item value missing required string field '{req_key}'"
+                )
+
+        if "kind" in v and v["kind"] not in ("action", "group"):
+            raise ValueError("Help item 'kind' must be 'action' or 'group'")
+
+        if "params" in v and v["params"] is not None:
+            if not isinstance(v["params"], list):
+                raise TypeError("Help item 'params' must be an array list")
+
+            current_stage = 0  # 0: positional, 1: required flag, 2: optional flag
+            last_name = ""
+
+            for param in v["params"]:
+                if not isinstance(param, dict):
+                    raise TypeError("Param entry item must be a dictionary object")
+                if "name" not in param or not isinstance(param["name"], str):
+                    raise ValueError("Param entry missing required string field 'name'")
+                if "kind" not in param or param["kind"] not in ("flag", "positional"):
+                    raise ValueError("Param 'kind' must be 'flag' or 'positional'")
+
+                if param["kind"] != "flag" and param.get("short") is not None:
+                    raise ValueError("Param 'short' is valid for kind='flag' only")
+
+                # Calculate implied or explicit parameter requirements
+                p_req = param.get("required", param["kind"] == "positional")
+
+                if param["kind"] == "positional":
+                    stage = 0
+                elif param["kind"] == "flag" and p_req:
+                    stage = 1
+                else:
+                    stage = 2
+
+                # Strict validation of order matrix rules (§8.1)
+                if stage < current_stage:
+                    raise ValueError(
+                        "Params ordering violation: positionals MUST precede flags; required flags MUST precede optional flags."
+                    )
+                if stage == current_stage:
+                    if param["name"] < last_name:
+                        raise ValueError(
+                            f"Params sorting violation: within each group, parameters must be alphabetical by name. Overlap found: '{param['name']}' after '{last_name}'."
+                        )
+
+                current_stage = stage
+                last_name = param["name"]
