@@ -220,6 +220,3 @@ __marimo__/
 static/**/.*
 docs/**/.*
 docs/TODO
-
-SCOP_M.md
-SCOP.md
