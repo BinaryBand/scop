@@ -48,7 +48,6 @@ SCOP is a composition, not a replacement:
 
 ---
 
-
 ## 3. Design Principles
 
 | Principle | Rule |
@@ -98,14 +97,18 @@ Every SCOP event is a serialised RFC 5424 message.
 
 **Optional:** `ts` (ISO 8601 timestamp), `app` (application name), `pid` (process id).
 
-**Severity → GUI rendering:**
+## Severity → GUI rendering
 
 | Severity | Value | Rendering |
 | --- | --- | --- |
-| EMERG–ERR | 0–3 | error modal |
+| EMERG | 0 | error modal (blocking) |
+| ALERT | 1 | error modal (blocking) |
+| CRIT | 2 | error modal (blocking) |
+| ERR | 3 | error modal (blocking) |
 | WARNING | 4 | warning banner |
-| NOTICE–INFO | 5–6 | log line |
-| DEBUG | 7 | suppressed by default |
+| NOTICE | 5 | log line |
+| INFO | 6 | log line |
+| DEBUG | 7 | suppressed — suppressed by default; shown when --verbose active |
 
 ---
 
