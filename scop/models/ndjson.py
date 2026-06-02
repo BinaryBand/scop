@@ -110,11 +110,6 @@ DISPLAY_HINT_ALLOWED_BY_MSGID: dict[str, set[str]] = {
     "TABLE_DECLARE": {"table", "chart", "cards"},
 }
 
-NON_NEGATIVE_FIELD_RULES: dict[str, tuple[str, ...]] = {
-    "PROCESS_BEGIN": ("total",),
-    "PROCESS_UPDATE": ("total", "current"),
-}
-
 
 class HelpParam(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -261,7 +256,6 @@ class NDJSONEvent(BaseModel):
             )
 
         # 3. Contextual Field Verification Rules
-        self._validate_non_negative_process_fields()
         for check_name in self._MSGID_VALIDATORS:
             getattr(self, check_name)()
 
@@ -300,13 +294,6 @@ class NDJSONEvent(BaseModel):
                 json_key = field_info.alias if field_info.alias else field_name
                 provided_vocabulary_fields.add(json_key)
         return provided_vocabulary_fields
-
-    def _validate_non_negative_process_fields(self) -> None:
-        field_names = NON_NEGATIVE_FIELD_RULES.get(self.msgid, ())
-        for name in field_names:
-            value = getattr(self, name)
-            if value is not None and value < 0:
-                raise ValueError(f"{name} must be non-negative")
 
     def _validate_scalar_set_value_matrix(self) -> None:
         if self.msgid != "SCALAR_SET":
