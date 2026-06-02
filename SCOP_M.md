@@ -23,7 +23,7 @@ Draft specification, published for review and comment. The key words "MUST", "MU
 
 SCOP defines how a CLI application emits structured output at runtime. SCOP-M defines how the same application declares its structure statically. The two are complementary:
 
-```text
+```proto
 scop.toml          ← static  (design time)   full structure declared
      ↕  semantically equivalent to
 --help/--status/--list per room ← discovery  same structure, live

@@ -1,7 +1,7 @@
 # Structured CLI Output Protocol (SCOP)
 
-**Version:** {{ version }}  
-**Status:** Draft Specification  
+**Version:** {{ version }}
+**Status:** Draft Specification
 **License:** CC0 1.0 Universal (Public Domain)
 
 ---
@@ -37,13 +37,13 @@ SCOP is a composition, not a replacement:
 
 ## 2. Terminology
 
-**Producer** — a SCOP-conforming CLI application that emits events.  
-**Consumer** — software that reads a SCOP event stream and renders it.  
-**Event** — a single NDJSON line emitted by a producer.  
-**Stream** — the ordered sequence of events from one command invocation.  
-**MSGID** — a string identifier classifying an event by its data type (§7).  
-**Room** — a page context derived from the subcommand path (§6).  
-**Page** — a GUI display unit corresponding to one room, assembled from one or more streams.  
+**Producer** — a SCOP-conforming CLI application that emits events.
+**Consumer** — software that reads a SCOP event stream and renders it.
+**Event** — a single NDJSON line emitted by a producer.
+**Stream** — the ordered sequence of events from one command invocation.
+**MSGID** — a string identifier classifying an event by its data type (§7).
+**Room** — a page context derived from the subcommand path (§6).
+**Page** — a GUI display unit corresponding to one room, assembled from one or more streams.
 **Slot** — a named region in a page layout; events are routed to slots by MSGID family.
 
 ---
@@ -302,7 +302,7 @@ PAGE_END
 
 **`--version`**
 
-```text
+```proto
 PAGE_BEGIN (room: null, title: app name)
 SCALAR_SET (id: "version", type: "string", value: semver)
 PAGE_END
@@ -310,7 +310,7 @@ PAGE_END
 
 **`--status`**
 
-```text
+```proto
 PAGE_BEGIN (room: current, title: context name)
 SCALAR_SET ×n
 PAGE_END
@@ -318,7 +318,7 @@ PAGE_END
 
 **`--list` / `-l`**
 
-```text
+```proto
 PAGE_BEGIN (room: current, title: context name)
 TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)
   OR
@@ -354,7 +354,7 @@ Modifier flags annotate `PROCESS_*` events with additional fields. No new MSGIDs
 
 A room that implements all three query flags can be fully described by those calls. A consumer that makes all three has everything needed to render a complete page without app-specific code.
 
-```text
+```proto
 ourapp [subcommand] --status   →  page chrome + stats
 ourapp [subcommand] --list     →  content
 ourapp [subcommand] --help     →  actions
@@ -401,7 +401,7 @@ Each call is independent. A page MAY be built from a subset.
 
 **CLI output** (msg fields only):
 
-```text
+```proto
 === Snapshots ===
 Tracked files: 1042
 Last snapshot: 2026-05-30T14:32:00Z

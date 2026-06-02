@@ -1,8 +1,8 @@
 # SCOP-M: Structured CLI Output Protocol — Manifest Format
 
-**Version:** {{ version }}  
-**Status:** Draft Specification  
-**License:** CC0 1.0 Universal (Public Domain)  
+**Version:** {{ version }}
+**Status:** Draft Specification
+**License:** CC0 1.0 Universal (Public Domain)
 **Companion to:** SCOP v{{ version }}
 
 ---
@@ -23,7 +23,7 @@ Draft specification, published for review and comment. The key words "MUST", "MU
 
 SCOP defines how a CLI application emits structured output at runtime. SCOP-M defines how the same application declares its structure statically. The two are complementary:
 
-```text
+```proto
 scop.toml          ← static  (design time)   full structure declared
      ↕  semantically equivalent to
 --help/--status/--list per room ← discovery  same structure, live
@@ -45,12 +45,12 @@ A SCOP-M file is OPTIONAL. A producer that does not supply one is still SCOP-con
 
 ## 2. Terminology
 
-**Manifest** — a `scop.toml` file conforming to this specification.  
-**Room** — a page context; corresponds directly to SCOP room strings (§6 of SCOP).  
-**Command** — an action available within a room; maps to a CLI subcommand or flag combination.  
-**Param** — a typed, named input accepted by a command.  
-**Stat** — a named scalar value emitted by `--status`; maps to a `SCALAR_SET` event.  
-**List schema** — the column definition for `--list` output; maps to `TABLE_DECLARE.schema`.  
+**Manifest** — a `scop.toml` file conforming to this specification.
+**Room** — a page context; corresponds directly to SCOP room strings (§6 of SCOP).
+**Command** — an action available within a room; maps to a CLI subcommand or flag combination.
+**Param** — a typed, named input accepted by a command.
+**Stat** — a named scalar value emitted by `--status`; maps to a `SCALAR_SET` event.
+**List schema** — the column definition for `--list` output; maps to `TABLE_DECLARE.schema`.
 **Global param** — a param inherited by every command in every room.
 
 ---
