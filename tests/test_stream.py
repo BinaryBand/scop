@@ -17,7 +17,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 import pytest
-from hypothesis import HealthCheck, given, settings, strategies as st
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from scop.models.ndjson import NDJSONEvent
 from scop.models.stream import SCOPStreamError, validate_stream
