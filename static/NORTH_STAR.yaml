@@ -63,14 +63,14 @@ severity:
     7: DEBUG
 
   gui_rendering:
-    0-3: { slot: error_modal, blocking: true }
+    0: { slot: error_modal, blocking: true }
+    1: { slot: error_modal, blocking: true }
+    2: { slot: error_modal, blocking: true }
+    3: { slot: error_modal, blocking: true }
     4: { slot: warning_banner, blocking: false }
-    5-6: { slot: log_line }
-    7:
-      {
-        slot: suppressed,
-        note: "suppressed by default; shown when --verbose active",
-      }
+    5: { slot: log_line }
+    6: { slot: log_line }
+    7: { slot: suppressed } # see flag_contracts.verbose for --verbose behaviour
 
 # ────────────────────────────────────────────────────────────────────────────
 # ROOM MODEL
@@ -294,6 +294,8 @@ stream_protocol:
   rules:
     - MUST: "Every stream begin with PAGE_BEGIN"
     - MUST: "Every stream end with PAGE_END"
+    - MUST: "Emit a well-formed empty page (PAGE_BEGIN + SCALAR_SET[id=page.empty] + PAGE_END) when a room has no data for --status or --list, rather than exiting with non-zero status"
+    - MUST: "Consumer: if stdout closes or process exits before PAGE_END, synthesise a terminal error state using partial content — MUST NOT remain in indeterminate loading state"
   PROCESS_lifecycle:
     sequence: [PROCESS_BEGIN, "PROCESS_UPDATE ×n", PROCESS_END]
     PROCESS_LOG: "MAY be interspersed between BEGIN and END"
@@ -316,6 +318,10 @@ flag_contracts:
 
     help_item_schema:
       # Value object for every LIST_APPEND where id = "help"
+      # NOTE: the `kind` field is defined here and in SCOP-M §4.6 but is not
+      # yet present in SCOP.md §8.1. It is tracked as a pending addition to
+      # SCOP.md. Until that addition lands, audit tools MUST NOT treat its
+      # absence from a producer's --help output as a conformance violation.
       required_fields: [command, description]
       optional_fields: [kind, params]
       fields:
@@ -325,6 +331,7 @@ flag_contracts:
           type: string
           enum: [action, group]
           default: action
+          status: pending_scop_md_addition # not yet in SCOP.md §8.1
           semantics:
             action: "executable leaf command"
             group: "navigates to a subroom"
@@ -383,7 +390,7 @@ flag_contracts:
       - PAGE_BEGIN: { room: current, intent: query, title: context_name }
       - SCALAR_SET: "×n"
       - PAGE_END
-    empty_room_rule: "MUST emit PAGE_BEGIN + SCALAR_SET(id=page.empty) + PAGE_END rather than exiting with non-zero status"
+    empty_room_rule: "see stream_protocol.rules"
 
   list:
     flags: [--list, -l]
@@ -393,7 +400,7 @@ flag_contracts:
       - "  OR"
       - "LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)"
       - PAGE_END
-    empty_room_rule: "MUST emit PAGE_BEGIN + SCALAR_SET(id=page.empty) + PAGE_END rather than exiting with non-zero status"
+    empty_room_rule: "see stream_protocol.rules"
 
   # ── Mode flags — adjust which events are emitted; produce no events ──────
 
@@ -421,7 +428,7 @@ flag_contracts:
 
   verbose:
     flags: [--verbose, -v]
-    include: "events with pri = 7"
+    include: "events with pri = 7" # pri=7 (DEBUG) shown when --verbose active
     mutual_exclusion: "--quiet"
     precedence: "MUST take precedence over --quiet"
 
@@ -444,6 +451,13 @@ flag_contracts:
     flags: [--force, -f]
     adds_field: { force: true }
 
+  # ── output flag — contract not yet specified ─────────────────────────────
+  # Listed in SCOP.md §4.1 flag table but has no defined event contract.
+  # Tracked as a pending addition to SCOP.md.
+  output:
+    flags: [--output, -o]
+    status: pending_contract # no event contract defined in SCOP.md §4.1 or §8
+
   # ── Inverse flags ────────────────────────────────────────────────────────
   inverse_flags:
     rule: "SHOULD be supported (e.g. --no-quiet, --no-recursive) wherever the positive flag is supported"
@@ -460,7 +474,7 @@ flag_contracts:
     - { long: --dry-run, short: -n, category: modifier }
     - { long: --recursive, short: -r, category: modifier }
     - { long: --force, short: -f, category: modifier }
-    - { long: --output, short: -o, category: other }
+    - { long: --output, short: -o, category: other, status: pending_contract }
 
 # ────────────────────────────────────────────────────────────────────────────
 # PAGE TEMPLATE (§9)
@@ -473,17 +487,24 @@ page_template:
 
   slots:
     page_chrome:
-      { source_flag: any, msgid: PAGE_BEGIN, gui: "title, subtitle, icon" }
-    stats: { source_flag: --status, msgid: SCALAR_SET, gui: "stat cards" }
-    content: { source_flag: --list, msgid: "TABLE or LIST", gui: "grid, list" }
+      { source_flag: any, msgid_families: [PAGE], gui: "title, subtitle, icon" }
+    stats:
+      { source_flag: --status, msgid_families: [SCALAR], gui: "stat cards" }
+    content:
+      { source_flag: --list, msgid_families: [TABLE, LIST], gui: "grid, list" }
     actions:
       {
         source_flag: --help,
-        msgid: "LIST(id=help)",
+        msgid_families: [LIST],
+        list_id_constraint: "id=help",
         gui: "buttons, command palette",
       }
     activity:
-      { source_flag: command, msgid: "PROCESS_*", gui: "progress bar, spinner" }
+      {
+        source_flag: command,
+        msgid_families: [PROCESS],
+        gui: "progress bar, spinner",
+      }
 
   optional_slots:
     description: { convention: "SCALAR_SET with id=page.description" }
@@ -525,7 +546,7 @@ consumer_routing:
     - condition: "pri 5–6"
       slot: log_area
     - condition: "pri 7"
-      action: "suppressed unless --verbose"
+      action: "suppressed by default (see flag_contracts.verbose)"
     - condition: "unknown MSGID"
       action: "route to log_area using msg"
     - condition: "unknown field"
@@ -548,7 +569,7 @@ conformance:
     - "Derive room from subcommand path per §6"
     - "Use only MSGIDs defined in §7"
     - "Implement --help, --version, --status, --list per §8.1"
-    - "Emit a well-formed empty page (PAGE_BEGIN + SCALAR_SET[id=page.empty] + PAGE_END) when a room has no data for --status or --list"
+    - "Emit a well-formed empty page when a room has no data for --status or --list (see stream_protocol.rules)"
     - "Encode all output as UTF-8"
 
   producer_SHOULD:
@@ -566,14 +587,14 @@ conformance:
     - "Ignore unknown MSGIDs without error"
     - "Ignore unknown fields without error"
     - "Map RFC 5424 severity per §4.2"
-    - "Synthesise terminal error state if stdout closes before PAGE_END — MUST NOT stay in loading state"
-    - "Sanitise string values before rendering in HTML or injection-sensitive contexts"
-    - "NOT suppress dry_run=true annotations"
+    - "Synthesise terminal error state if stdout closes before PAGE_END — MUST NOT stay in loading state (see stream_protocol.rules)"
+    - "NOT suppress dry_run=true annotations (see security)"
+    - "Sanitise string values before rendering in HTML or injection-sensitive contexts (see security)"
 
   consumer_SHOULD:
     - "Implement the three-flag protocol (§9)"
     - "Support optional slots (§9)"
-    - "Implement stream size limits"
+    - "Implement stream size limits (see security)"
 
 # ────────────────────────────────────────────────────────────────────────────
 # SECURITY RULES

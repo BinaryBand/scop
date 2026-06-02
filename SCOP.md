@@ -108,7 +108,7 @@ Every SCOP event is a serialised RFC 5424 message.
 | WARNING | 4 | warning banner |
 | NOTICE | 5 | log line |
 | INFO | 6 | log line |
-| DEBUG | 7 | suppressed — suppressed by default; shown when --verbose active |
+| DEBUG | 7 | suppressed by default (see §8.2) |
 
 ---
 

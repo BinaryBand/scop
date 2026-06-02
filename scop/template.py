@@ -129,6 +129,10 @@ def render_templates():
                 name = values.get(code, values.get(str(code), f"PRI {code}"))
                 rendering = code_to_render.get(code, "")
                 severity_rows.append({"code": code, "name": name, "rendering": rendering})
+            # Override DEBUG rendering to reference the flag contract section
+            for r in severity_rows:
+                if r.get("code") == 7:
+                    r["rendering"] = "suppressed by default (see §8.2)"
         except Exception as e:
             print(f"Error reading NORTH_STAR.yaml: {e}", file=sys.stderr)
 
