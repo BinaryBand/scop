@@ -14,11 +14,11 @@ spec_version: "0.1.2-draft"
 # WIRE FORMAT
 # ────────────────────────────────────────────────────────────────────────────
 wire_format:
-  serialization: NDJSON                 # one complete JSON object per line
+  serialization: NDJSON # one complete JSON object per line
   line_separator: "\n"
   character_encoding: UTF-8
   output_target: stdout
-  parseable: per_line_independent       # each line MUST be independently parseable
+  parseable: per_line_independent # each line MUST be independently parseable
 
 # ────────────────────────────────────────────────────────────────────────────
 # EVENT BASE
@@ -44,9 +44,9 @@ event_base:
 
   optional_fields: [ts, app, pid]
   field_details:
-    ts:  {type: string, format: ISO 8601}
-    app: {type: string, description: "application name"}
-    pid: {type: integer, description: "process id"}
+    ts: { type: string, format: ISO 8601 }
+    app: { type: string, description: "application name" }
+    pid: { type: integer, description: "process id" }
 
 # ────────────────────────────────────────────────────────────────────────────
 # SEVERITY
@@ -63,10 +63,14 @@ severity:
     7: DEBUG
 
   gui_rendering:
-    0-3: {slot: error_modal,    blocking: true}
-    4:   {slot: warning_banner, blocking: false}
-    5-6: {slot: log_line}
-    7:   {slot: suppressed,     note: "suppressed by default; shown when --verbose active"}
+    0-3: { slot: error_modal, blocking: true }
+    4: { slot: warning_banner, blocking: false }
+    5-6: { slot: log_line }
+    7:
+      {
+        slot: suppressed,
+        note: "suppressed by default; shown when --verbose active",
+      }
 
 # ────────────────────────────────────────────────────────────────────────────
 # ROOM MODEL
@@ -79,11 +83,16 @@ room_model:
   root_room_value: null
 
   examples:
-    - invocation: "ourapp"                              room: null
-    - invocation: "ourapp snapshot"                    room: "snapshot"
-    - invocation: "ourapp snapshot diff"               room: "snapshot/diff"
-    - invocation: "ourapp snapshot --list"             room: "snapshot"
-    - invocation: "ourapp snapshot diff snap-001 snap-002"  room: "snapshot/diff"
+    - invocation: "ourapp"
+      room: null
+    - invocation: "ourapp snapshot"
+      room: "snapshot"
+    - invocation: "ourapp snapshot diff"
+      room: "snapshot/diff"
+    - invocation: "ourapp snapshot --list"
+      room: "snapshot"
+    - invocation: "ourapp snapshot diff snap-001 snap-002"
+      room: "snapshot/diff"
 
   rules:
     - MUST: "Room strings be stable across versions"
@@ -95,22 +104,26 @@ room_model:
 # MSGID DEFINITIONS
 # ────────────────────────────────────────────────────────────────────────────
 msgids:
-
   # ── PAGE family ─────────────────────────────────────────────────────────
   PAGE_BEGIN:
     family: PAGE
     fields:
-      room:     {required: true,  type: [string, "null"]}
-      title:    {required: true,  type: string}
-      subtitle: {required: false, type: string}
-      icon:     {required: false, type: string, constraint: "GitHub gemoji code of form :name: — raw Unicode codepoints MUST NOT be used"}
+      room: { required: true, type: [string, "null"] }
+      title: { required: true, type: string }
+      subtitle: { required: false, type: string }
+      icon:
+        {
+          required: false,
+          type: string,
+          constraint: "GitHub gemoji code of form :name: — raw Unicode codepoints MUST NOT be used",
+        }
       intent:
         required: false
         type: string
         enum: [query, action]
         default: query
         semantics:
-          query:  "Build or replace the page view. All slots updated. Used for --status, --list, --help, navigation."
+          query: "Build or replace the page view. All slots updated. Used for --status, --list, --help, navigation."
           action: "An operation is running. Route PROCESS_* to activity slot only. All other slots remain intact."
     rules:
       - SHOULD: "intent be included on every PAGE_BEGIN"
@@ -118,7 +131,7 @@ msgids:
   PAGE_END:
     family: PAGE
     fields:
-      room: {required: true, type: [string, "null"]}
+      room: { required: true, type: [string, "null"] }
     rules:
       - SHOULD: "msg be empty string"
 
@@ -126,31 +139,41 @@ msgids:
   PROCESS_BEGIN:
     family: PROCESS
     fields:
-      id:        {required: true,  type: string}
-      label:     {required: true,  type: string}
-      total:     {required: false, type: integer, note: "Omit when unknown; consumer SHOULD render indeterminate indicator"}
-      dry_run:   {required: false, type: boolean, constraint: "MUST be true on ALL PROCESS_* events when --dry-run is active"}
-      recursive: {required: false, type: boolean}
+      id: { required: true, type: string }
+      label: { required: true, type: string }
+      total:
+        {
+          required: false,
+          type: integer,
+          note: "Omit when unknown; consumer SHOULD render indeterminate indicator",
+        }
+      dry_run:
+        {
+          required: false,
+          type: boolean,
+          constraint: "MUST be true on ALL PROCESS_* events when --dry-run is active",
+        }
+      recursive: { required: false, type: boolean }
 
   PROCESS_UPDATE:
     family: PROCESS
     fields:
-      id:      {required: true,  type: string}
-      current: {required: true,  type: integer}
-      total:   {required: false, type: integer}
-      label:   {required: false, type: string}
+      id: { required: true, type: string }
+      current: { required: true, type: integer }
+      total: { required: false, type: integer }
+      label: { required: false, type: string }
 
   PROCESS_END:
     family: PROCESS
     fields:
-      id:      {required: true,  type: string}
-      ok:      {required: true,  type: boolean}
-      dry_run: {required: false, type: boolean}
+      id: { required: true, type: string }
+      ok: { required: true, type: boolean }
+      dry_run: { required: false, type: boolean }
 
   PROCESS_LOG:
     family: PROCESS
     fields:
-      id: {required: true, type: string}
+      id: { required: true, type: string }
     rules:
       - MUST: "carry payload in msg only — no separate message field"
 
@@ -158,19 +181,19 @@ msgids:
   SCALAR_SET:
     family: SCALAR
     fields:
-      id:    {required: true, type: string}
-      label: {required: true, type: string}
-      value: {required: true, type: any}
+      id: { required: true, type: string }
+      label: { required: true, type: string }
+      value: { required: true, type: any }
       type:
         required: true
         type: string
         enum: [number, string, boolean, duration, bytes]
-      unit:         {required: false, type: string}
+      unit: { required: false, type: string }
       display_hint:
         required: false
         type: string
         enum: [badge]
-        advisory: true   # consumers MAY ignore
+        advisory: true # consumers MAY ignore
         constraint: "Producers MUST NOT use values not defined in this spec"
     type_serialization_rules:
       bytes:
@@ -184,47 +207,53 @@ msgids:
   SCALAR_CLEAR:
     family: SCALAR
     fields:
-      id: {required: true, type: string}
+      id: { required: true, type: string }
 
   # ── LIST family ────────────────────────────────────────────────────
   LIST_DECLARE:
     family: LIST
     fields:
-      id:      {required: true, type: string}
-      label:   {required: true, type: string}
-      ordered: {required: true, type: boolean, semantics: "true → numbered; false → bullets"}
+      id: { required: true, type: string }
+      label: { required: true, type: string }
+      ordered:
+        {
+          required: true,
+          type: boolean,
+          semantics: "true → numbered; false → bullets",
+        }
 
   LIST_APPEND:
     family: LIST
     fields:
-      id:      {required: true, type: string}
-      item_id: {required: true, type: string}
-      value:   {required: true, type: any, note: "MAY be scalar or a JSON object"}
+      id: { required: true, type: string }
+      item_id: { required: true, type: string }
+      value:
+        { required: true, type: any, note: "MAY be scalar or a JSON object" }
 
   LIST_UPDATE:
     family: LIST
     fields:
-      id:      {required: true, type: string}
-      item_id: {required: true, type: string}
-      value:   {required: true, type: any}
+      id: { required: true, type: string }
+      item_id: { required: true, type: string }
+      value: { required: true, type: any }
 
   LIST_REMOVE:
     family: LIST
     fields:
-      id:      {required: true, type: string}
-      item_id: {required: true, type: string}
+      id: { required: true, type: string }
+      item_id: { required: true, type: string }
 
   LIST_END:
     family: LIST
     fields:
-      id: {required: true, type: string}
+      id: { required: true, type: string }
 
   # ── TABLE family ──────────────────────────────────────────────────
   TABLE_DECLARE:
     family: TABLE
     fields:
-      id:     {required: true,  type: string}
-      label:  {required: true,  type: string}
+      id: { required: true, type: string }
+      label: { required: true, type: string }
       schema:
         required: true
         type: array
@@ -234,13 +263,13 @@ msgids:
         required: false
         type: string
         enum: [table, chart, cards]
-        advisory: true    # consumers MAY ignore
+        advisory: true # consumers MAY ignore
 
   TABLE_ROW:
     family: TABLE
     fields:
-      id:     {required: true, type: string}
-      row_id: {required: true, type: string}
+      id: { required: true, type: string }
+      row_id: { required: true, type: string }
       values:
         required: true
         type: object
@@ -249,14 +278,14 @@ msgids:
   TABLE_UPDATE:
     family: TABLE
     fields:
-      id:     {required: true, type: string}
-      row_id: {required: true, type: string}
-      values: {required: true, type: object}
+      id: { required: true, type: string }
+      row_id: { required: true, type: string }
+      values: { required: true, type: object }
 
   TABLE_END:
     family: TABLE
     fields:
-      id: {required: true, type: string}
+      id: { required: true, type: string }
 
 # ────────────────────────────────────────────────────────────────────────────
 # STREAM PROTOCOL
@@ -273,15 +302,14 @@ stream_protocol:
 # GNU FLAG CONTRACTS
 # ────────────────────────────────────────────────────────────────────────────
 flag_contracts:
-
   # ── Query flags — produce data output and exit ───────────────────────────
   # Each response MUST be wrapped in PAGE_BEGIN / PAGE_END.
 
   help:
     flags: [--help, -h]
     sequence:
-      - PAGE_BEGIN: {room: current, intent: query, title: command_name}
-      - LIST_DECLARE: {id: help, ordered: false}
+      - PAGE_BEGIN: { room: current, intent: query, title: command_name }
+      - LIST_DECLARE: { id: help, ordered: false }
       - LIST_APPEND: "×n  (value: help_item object — see help_item_schema)"
       - LIST_END
       - PAGE_END
@@ -291,20 +319,20 @@ flag_contracts:
       required_fields: [command, description]
       optional_fields: [kind, params]
       fields:
-        command:     {type: string, description: "CLI token for this entry"}
-        description: {type: string, description: "Human-readable description"}
+        command: { type: string, description: "CLI token for this entry" }
+        description: { type: string, description: "Human-readable description" }
         kind:
           type: string
           enum: [action, group]
           default: action
           semantics:
             action: "executable leaf command"
-            group:  "navigates to a subroom"
+            group: "navigates to a subroom"
         params:
           type: array
           required_when: "kind=action AND command accepts one or more inputs"
           constraint: "Omitting params when kind=action and inputs exist defeats zero-app-knowledge guarantee"
-          item_schema: param_object  # see below
+          item_schema: param_object # see below
       params_ordering:
         rule: "positionals MUST precede flags; required flags MUST precede optional flags; alphabetical by name within each group"
 
@@ -313,33 +341,46 @@ flag_contracts:
       required_fields: [name, kind]
       optional_fields: [type, short, metavar, required, repeatable, description]
       fields:
-        name:       {type: string,  description: "Flag name (e.g. --path) or positional label (e.g. target)"}
-        kind:       {type: string,  enum: [flag, positional]}
+        name:
+          {
+            type: string,
+            description: "Flag name (e.g. --path) or positional label (e.g. target)",
+          }
+        kind: { type: string, enum: [flag, positional] }
         type:
           type: string
           default: string
-          enum: [string, number, boolean, path, datetime, duration, bytes, choice]
+          enum:
+            [string, number, boolean, path, datetime, duration, bytes, choice]
           note: "Types from SCOP-M §5; broader than the SCALAR_SET.type enum"
-        short:      {type: string,  note: "Single-char short flag (e.g. -p). Valid for kind=flag only."}
-        metavar:    {type: string,  description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)"}
+        short:
+          {
+            type: string,
+            note: "Single-char short flag (e.g. -p). Valid for kind=flag only.",
+          }
+        metavar:
+          {
+            type: string,
+            description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)",
+          }
         required:
           type: boolean
           default_for_positional: true
           default_for_flag: false
-        repeatable: {type: boolean, default: false}
-        description: {type: string}
+        repeatable: { type: boolean, default: false }
+        description: { type: string }
 
   version:
     flags: [--version]
     sequence:
-      - PAGE_BEGIN: {room: null, title: app_name}
-      - SCALAR_SET: {id: version, type: string, value: semver}
+      - PAGE_BEGIN: { room: null, title: app_name }
+      - SCALAR_SET: { id: version, type: string, value: semver }
       - PAGE_END
 
   status:
     flags: [--status]
     sequence:
-      - PAGE_BEGIN: {room: current, intent: query, title: context_name}
+      - PAGE_BEGIN: { room: current, intent: query, title: context_name }
       - SCALAR_SET: "×n"
       - PAGE_END
     empty_room_rule: "MUST emit PAGE_BEGIN + SCALAR_SET(id=page.empty) + PAGE_END rather than exiting with non-zero status"
@@ -347,7 +388,7 @@ flag_contracts:
   list:
     flags: [--list, -l]
     sequence:
-      - PAGE_BEGIN: {room: current, intent: query, title: context_name}
+      - PAGE_BEGIN: { room: current, intent: query, title: context_name }
       - "TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)"
       - "  OR"
       - "LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)"
@@ -358,11 +399,25 @@ flag_contracts:
 
   quiet:
     flags: [--quiet, -q]
-    suppress:       [PROCESS_LOG, PROCESS_UPDATE]
-    never_suppress: [PAGE_BEGIN, PAGE_END, PROCESS_BEGIN, PROCESS_END, SCALAR_SET,
-                     LIST_DECLARE, LIST_APPEND, LIST_UPDATE, LIST_REMOVE, LIST_END,
-                     TABLE_DECLARE, TABLE_ROW, TABLE_UPDATE, TABLE_END,
-                     "any event with pri ≤ 4"]
+    suppress: [PROCESS_LOG, PROCESS_UPDATE]
+    never_suppress:
+      [
+        PAGE_BEGIN,
+        PAGE_END,
+        PROCESS_BEGIN,
+        PROCESS_END,
+        SCALAR_SET,
+        LIST_DECLARE,
+        LIST_APPEND,
+        LIST_UPDATE,
+        LIST_REMOVE,
+        LIST_END,
+        TABLE_DECLARE,
+        TABLE_ROW,
+        TABLE_UPDATE,
+        TABLE_END,
+        "any event with pri ≤ 4",
+      ]
 
   verbose:
     flags: [--verbose, -v]
@@ -378,16 +433,16 @@ flag_contracts:
 
   dry_run:
     flags: [--dry-run, -n]
-    adds_field: {dry_run: true}
+    adds_field: { dry_run: true }
     rule: "MUST be present on ALL PROCESS_* events when active"
 
   recursive:
     flags: [--recursive, -r]
-    adds_field: {recursive: true}
+    adds_field: { recursive: true }
 
   force:
     flags: [--force, -f]
-    adds_field: {force: true}
+    adds_field: { force: true }
 
   # ── Inverse flags ────────────────────────────────────────────────────────
   inverse_flags:
@@ -395,17 +450,17 @@ flag_contracts:
 
   # ── Full flag table ──────────────────────────────────────────────────────
   all_flags:
-    - {long: --help,      short: -h,  category: query}
-    - {long: --version,   short: null, category: query}
-    - {long: --list,      short: -l,  category: query}
-    - {long: --status,    short: null, category: query}
-    - {long: --all,       short: -a,  category: mode}
-    - {long: --quiet,     short: -q,  category: mode}
-    - {long: --verbose,   short: -v,  category: mode}
-    - {long: --dry-run,   short: -n,  category: modifier}
-    - {long: --recursive, short: -r,  category: modifier}
-    - {long: --force,     short: -f,  category: modifier}
-    - {long: --output,    short: -o,  category: other}
+    - { long: --help, short: -h, category: query }
+    - { long: --version, short: null, category: query }
+    - { long: --list, short: -l, category: query }
+    - { long: --status, short: null, category: query }
+    - { long: --all, short: -a, category: mode }
+    - { long: --quiet, short: -q, category: mode }
+    - { long: --verbose, short: -v, category: mode }
+    - { long: --dry-run, short: -n, category: modifier }
+    - { long: --recursive, short: -r, category: modifier }
+    - { long: --force, short: -f, category: modifier }
+    - { long: --output, short: -o, category: other }
 
 # ────────────────────────────────────────────────────────────────────────────
 # PAGE TEMPLATE (§9)
@@ -417,17 +472,24 @@ page_template:
     - "ourapp [subcommand] --help    →  actions"
 
   slots:
-    page_chrome: {source_flag: any,      msgid: PAGE_BEGIN,       gui: "title, subtitle, icon"}
-    stats:       {source_flag: --status, msgid: SCALAR_SET,       gui: "stat cards"}
-    content:     {source_flag: --list,   msgid: "TABLE or LIST",  gui: "grid, list"}
-    actions:     {source_flag: --help,   msgid: "LIST(id=help)",  gui: "buttons, command palette"}
-    activity:    {source_flag: command,  msgid: "PROCESS_*",      gui: "progress bar, spinner"}
+    page_chrome:
+      { source_flag: any, msgid: PAGE_BEGIN, gui: "title, subtitle, icon" }
+    stats: { source_flag: --status, msgid: SCALAR_SET, gui: "stat cards" }
+    content: { source_flag: --list, msgid: "TABLE or LIST", gui: "grid, list" }
+    actions:
+      {
+        source_flag: --help,
+        msgid: "LIST(id=help)",
+        gui: "buttons, command palette",
+      }
+    activity:
+      { source_flag: command, msgid: "PROCESS_*", gui: "progress bar, spinner" }
 
   optional_slots:
-    description: {convention: "SCALAR_SET with id=page.description"}
-    chart:       {convention: "TABLE_DECLARE with display_hint=chart"}
-    empty_state: {convention: "SCALAR_SET with id=page.empty"}
-    badge:       {convention: "SCALAR_SET with display_hint=badge"}
+    description: { convention: "SCALAR_SET with id=page.description" }
+    chart: { convention: "TABLE_DECLARE with display_hint=chart" }
+    empty_state: { convention: "SCALAR_SET with id=page.empty" }
+    badge: { convention: "SCALAR_SET with display_hint=badge" }
 
 # ────────────────────────────────────────────────────────────────────────────
 # CONSUMER ROUTING TABLE (§10)
@@ -435,39 +497,39 @@ page_template:
 consumer_routing:
   routes:
     - condition: "PAGE_BEGIN, intent=query, same room"
-      action:    "update page — merge slot content; existing slots not in this stream persist"
+      action: "update page — merge slot content; existing slots not in this stream persist"
     - condition: "PAGE_BEGIN, intent=query, different room"
-      action:    "replace page — navigate to new room; all slots replaced"
+      action: "replace page — navigate to new room; all slots replaced"
     - condition: "PAGE_BEGIN, intent=action"
-      action:    "open activity overlay — activity slot only; all other slots unchanged"
+      action: "open activity overlay — activity slot only; all other slots unchanged"
     - condition: "SCALAR_SET"
-      slot:      stats_area
+      slot: stats_area
     - condition: "TABLE_*"
-      slot:      content_area
+      slot: content_area
     - condition: "LIST_*, id=help"
-      slot:      actions_area
+      slot: actions_area
     - condition: "LIST_*, id≠help"
-      slot:      content_area
+      slot: content_area
     - condition: "PROCESS_*"
-      slot:      activity_indicator
+      slot: activity_indicator
     - condition: "PAGE_END, intent=query"
-      action:    "end of stream; slot update complete; page remains visible"
+      action: "end of stream; slot update complete; page remains visible"
     - condition: "PAGE_END, intent=action"
-      action:    "close activity overlay"
+      action: "close activity overlay"
     - condition: "pri 0–3"
-      slot:      error_modal
-      blocking:  true
+      slot: error_modal
+      blocking: true
     - condition: "pri 4"
-      slot:      warning_banner
-      blocking:  false
+      slot: warning_banner
+      blocking: false
     - condition: "pri 5–6"
-      slot:      log_area
+      slot: log_area
     - condition: "pri 7"
-      action:    "suppressed unless --verbose"
+      action: "suppressed unless --verbose"
     - condition: "unknown MSGID"
-      action:    "route to log_area using msg"
+      action: "route to log_area using msg"
     - condition: "unknown field"
-      action:    "ignore without error"
+      action: "ignore without error"
 
   rules:
     - MUST: "maintain independent slot state per id for PROCESS_* events"
@@ -528,20 +590,20 @@ security:
 # SCALAR_SET.type uses the narrower wire-type set.
 # ────────────────────────────────────────────────────────────────────────────
 type_systems:
-  scalar_set_wire_types:          # SCOP §7.3 — SCALAR_SET.type enum
+  scalar_set_wire_types: # SCOP §7.3 — SCALAR_SET.type enum
     enum: [number, string, boolean, duration, bytes]
 
-  param_types:                    # SCOP §8.1 / SCOP-M §5 — param.type enum
+  param_types: # SCOP §8.1 / SCOP-M §5 — param.type enum
     enum: [string, number, boolean, path, datetime, duration, bytes, choice]
-    wire_type_mapping:            # how manifest types serialise on the wire
-      string:   string
-      number:   number
-      boolean:  boolean
-      path:     string
-      datetime: string            # ISO 8601 string
-      duration: duration          # ISO 8601 duration string
-      bytes:    bytes             # JSON integer (absolute byte count)
-      choice:   string            # MUST be a member of choices[]
+    wire_type_mapping: # how manifest types serialise on the wire
+      string: string
+      number: number
+      boolean: boolean
+      path: string
+      datetime: string # ISO 8601 string
+      duration: duration # ISO 8601 duration string
+      bytes: bytes # JSON integer (absolute byte count)
+      choice: string # MUST be a member of choices[]
 
   note: >
     path, datetime, and choice are manifest-level annotations over string.
