@@ -8,6 +8,7 @@ basic semantic validations are enforced (single-line `msg`, non-negative
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Annotated, Any, ClassVar, Dict, List, Literal, Optional
 
@@ -25,6 +26,12 @@ INTENT = Literal["query", "action"]
 PARAM_KIND = Literal["flag", "positional"]
 HELP_KIND = Literal["action", "group"]
 
+# Conservative ISO 8601 duration matcher for SCOP `duration` scalar values.
+# Accepts examples like: P1D, PT2H, PT1M30S, P1DT2H, P2W.
+ISO8601_DURATION_RE = re.compile(
+    r"^P(?=.+)(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$"
+)
+
 Text = Annotated[str, StringConstraints(strict=True)]
 SingleLineText = Annotated[
     str,
@@ -32,8 +39,8 @@ SingleLineText = Annotated[
 ]
 GemojiCode = Annotated[
     str,
-    # Preserve previous semantics: starts/ends with ':' and has no spaces.
-    StringConstraints(strict=True, pattern=r"^:[^ ]+:$"),
+    # SCOP requires :name: token shape for gemoji codes.
+    StringConstraints(strict=True, pattern=r"^:[A-Za-z0-9_+\-]+:$"),
 ]
 NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
 Flag = Annotated[bool, Field(strict=True)]
@@ -117,8 +124,12 @@ class HelpParam(BaseModel):
 
     name: Text
     kind: PARAM_KIND
+    type: OptText = None
     required: OptFlag = None
     short: OptText = None
+    metavar: OptText = None
+    repeatable: OptFlag = None
+    description: OptText = None
 
 
 class HelpItem(BaseModel):
@@ -309,7 +320,7 @@ class NDJSONEvent(BaseModel):
                 raise TypeError(
                     "For type='duration', value MUST be an ISO 8601 duration string"
                 )
-            if not v.startswith("P") or len(v) < 2:
+            if not ISO8601_DURATION_RE.fullmatch(v):
                 raise ValueError(
                     "For type='duration', value MUST be a valid ISO 8601 duration string (e.g. 'PT1M30S')"
                 )
@@ -337,12 +348,12 @@ class NDJSONEvent(BaseModel):
         if self.msgid not in HELP_LIST_MSGIDS or self.id != "help":
             return
 
-        try:
-            item = HelpItem.model_validate(self.value)
-        except Exception as exc:
+        if not isinstance(self.value, dict):
             raise TypeError(
                 "Help item value must be a structural JSON dictionary object"
-            ) from exc
+            )
+
+        item = HelpItem.model_validate(self.value)
 
         if not item.params:
             return

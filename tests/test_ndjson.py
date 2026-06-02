@@ -118,6 +118,7 @@ def test_process_update_total_and_current_non_negative():
         ("bytes", -1, False),
         ("bytes", True, False),
         ("duration", "PT1M30S", True),
+        ("duration", "PXYZ", False),
         ("duration", "1m", False),
         ("number", 3.14, True),
         ("number", True, False),
