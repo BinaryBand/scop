@@ -11,9 +11,30 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    StrictStr,
+    field_validator,
+    model_validator,
+)
 
 TYPE = Literal["number", "string", "boolean", "duration", "bytes"]
+INTENT = Literal["query", "action"]
+
+Text = StrictStr
+Int = StrictInt
+Flag = StrictBool
+
+OptText = Optional[Text]
+OptInt = Optional[Int]
+OptFlag = Optional[Flag]
+
+JSONMap = Dict[Text, Any]
+TextList = List[Text]
 
 MSGID = Literal[
     "PAGE_BEGIN",
@@ -99,61 +120,53 @@ class NDJSONEvent(BaseModel):
     )
 
     # Core Required Fields (§4.2 & §5)
-    pri: int = Field(..., description="RFC 5424 PRI — facility*8 + severity")
+    pri: Int = Field(..., description="RFC 5424 PRI — facility*8 + severity")
     msgid: MSGID = Field(..., description="SCOP message identifier")
-    room: Optional[str] = Field(..., description="Derived room path or null")
-    msg: str = Field(..., description="Human-readable single-line message")
+    room: OptText = Field(..., description="Derived room path or null")
+    msg: Text = Field(..., description="Human-readable single-line message")
 
     # Optional Infrastructure Fields (§4.2)
     ts: Optional[datetime] = Field(None, description="ISO 8601 timestamp")
-    app: Optional[str] = Field(None, description="Application name")
-    pid: Optional[int] = Field(None, description="Process id")
+    app: OptText = Field(None, description="Application name")
+    pid: OptInt = Field(None, description="Process id")
 
     # Dynamic Vocabulary Fields (§7)
-    title: Optional[str] = Field(None, description="PAGE_BEGIN title")
-    subtitle: Optional[str] = Field(None, description="PAGE_BEGIN subtitle")
-    icon: Optional[str] = Field(None, description="PAGE_BEGIN icon gemoji code")
-    intent: Literal["query", "action"] = Field(
+    title: OptText = Field(None, description="PAGE_BEGIN title")
+    subtitle: OptText = Field(None, description="PAGE_BEGIN subtitle")
+    icon: OptText = Field(None, description="PAGE_BEGIN icon gemoji code")
+    intent: INTENT = Field(
         "query", description="PAGE_BEGIN view integration strategy (default: 'query')"
     )
 
-    id: Optional[str] = Field(
-        None, description="Identifier for dynamic structural items"
-    )
-    label: Optional[str] = Field(None, description="Human readable label")
-    total: Optional[int] = Field(None, description="Total expected steps or size")
-    current: Optional[int] = Field(None, description="Current progress step")
-    ok: Optional[bool] = Field(None, description="Process termination success status")
-    dry_run: Optional[bool] = Field(
-        None, description="Flag indicating mock action execution"
-    )
-    recursive: Optional[bool] = Field(
+    id: OptText = Field(None, description="Identifier for dynamic structural items")
+    label: OptText = Field(None, description="Human readable label")
+    total: OptInt = Field(None, description="Total expected steps or size")
+    current: OptInt = Field(None, description="Current progress step")
+    ok: OptFlag = Field(None, description="Process termination success status")
+    dry_run: OptFlag = Field(None, description="Flag indicating mock action execution")
+    recursive: OptFlag = Field(
         None, description="Flag indicating recursive modifier context"
     )
-    force: Optional[bool] = Field(
-        None, description="Flag indicating forced modifier context"
-    )
+    force: OptFlag = Field(None, description="Flag indicating forced modifier context")
 
     type: Optional[TYPE] = Field(None, description="Abstract scalar value type")
     value: Optional[Any] = Field(
         None, description="Scalar or structural entry value representation"
     )
-    unit: Optional[str] = Field(None, description="Display unit denomination")
-    display_hint: Optional[str] = Field(
-        None, description="Advisory presentation suggestion"
-    )
+    unit: OptText = Field(None, description="Display unit denomination")
+    display_hint: OptText = Field(None, description="Advisory presentation suggestion")
 
-    item_id: Optional[str] = Field(None, description="Unique list element identifier")
-    ordered: Optional[bool] = Field(
+    item_id: OptText = Field(None, description="Unique list element identifier")
+    ordered: OptFlag = Field(
         None, description="List item sorting configuration indication"
     )
 
     # Renamed to avoid protected namespace conflicts while targeting the correct JSON key
-    table_schema: Optional[List[str]] = Field(
+    table_schema: Optional[TextList] = Field(
         None, alias="schema", description="Ordered collection of table schema keys"
     )
-    row_id: Optional[str] = Field(None, description="Unique table row entity key")
-    values: Optional[Dict[str, Any]] = Field(
+    row_id: OptText = Field(None, description="Unique table row entity key")
+    values: Optional[JSONMap] = Field(
         None,
         description="Relational data dictionary mapping schema keys to cell values",
     )
