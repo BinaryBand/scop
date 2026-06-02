@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Annotated, Any, ClassVar, Dict, List, Literal, Optional
+from typing import Annotated, Any, ClassVar, Literal, Optional
 
 from pydantic import (
     BaseModel,
@@ -51,8 +51,8 @@ OptGemojiCode = Optional[GemojiCode]
 OptNonNegativeInt = Optional[NonNegativeInt]
 OptFlag = Optional[Flag]
 
-JSONMap = Dict[Text, Any]
-TextList = List[Text]
+JSONMap = dict[Text, Any]
+TextList = list[Text]
 
 MSGID = Literal[
     "PAGE_BEGIN",
@@ -137,8 +137,8 @@ class HelpItem(BaseModel):
 
     command: Text
     description: Text
-    kind: Optional[HELP_KIND] = None
-    params: Optional[List[HelpParam]] = None
+    kind: HELP_KIND | None = None
+    params: list[HelpParam] | None = None
 
 
 class NDJSONEvent(BaseModel):
@@ -164,7 +164,7 @@ class NDJSONEvent(BaseModel):
     msg: SingleLineText = Field(..., description="Human-readable single-line message")
 
     # Optional Infrastructure Fields (§4.2)
-    ts: Optional[datetime] = Field(None, description="ISO 8601 timestamp")
+    ts: datetime | None = Field(None, description="ISO 8601 timestamp")
     app: OptText = Field(None, description="Application name")
     pid: OptNonNegativeInt = Field(None, description="Process id")
 
@@ -187,8 +187,8 @@ class NDJSONEvent(BaseModel):
     )
     force: OptFlag = Field(None, description="Flag indicating forced modifier context")
 
-    type: Optional[TYPE] = Field(None, description="Abstract scalar value type")
-    value: Optional[Any] = Field(
+    type: TYPE | None = Field(None, description="Abstract scalar value type")
+    value: Any | None = Field(
         None, description="Scalar or structural entry value representation"
     )
     unit: OptText = Field(None, description="Display unit denomination")
@@ -200,11 +200,11 @@ class NDJSONEvent(BaseModel):
     )
 
     # Renamed to avoid protected namespace conflicts while targeting the correct JSON key
-    table_schema: Optional[TextList] = Field(
+    table_schema: TextList | None = Field(
         None, alias="schema", description="Ordered collection of table schema keys"
     )
     row_id: OptText = Field(None, description="Unique table row entity key")
-    values: Optional[JSONMap] = Field(
+    values: JSONMap | None = Field(
         None,
         description="Relational data dictionary mapping schema keys to cell values",
     )
@@ -330,9 +330,8 @@ class NDJSONEvent(BaseModel):
         elif t == "string":
             if not isinstance(v, str):
                 raise TypeError("For type='string', value MUST be a string")
-        elif t == "boolean":
-            if not isinstance(v, bool):
-                raise TypeError("For type='boolean', value MUST be a boolean")
+        elif t == "boolean" and not isinstance(v, bool):
+            raise TypeError("For type='boolean', value MUST be a boolean")
 
     def _validate_display_hint_rules(self) -> None:
         if self.display_hint is None:
