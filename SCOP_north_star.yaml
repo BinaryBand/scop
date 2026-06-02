@@ -1,0 +1,549 @@
+# SCOP North Star — v0.1.2-draft
+# Canonical machine-readable definition of all normative SCOP rules.
+# Use this file to audit SCOP.md for internal consistency.
+#
+# Conventions used here:
+#   MUST / MUST_NOT / SHOULD / SHOULD_NOT / MAY  — RFC 2119 normative strength
+#   enum: [...]     — exhaustive list of valid values
+#   required: true  — field MUST be present
+#   required: false — field is optional
+
+spec_version: "0.1.2-draft"
+
+# ────────────────────────────────────────────────────────────────────────────
+# WIRE FORMAT
+# ────────────────────────────────────────────────────────────────────────────
+wire_format:
+  serialization: NDJSON                 # one complete JSON object per line
+  line_separator: "\n"
+  character_encoding: UTF-8
+  output_target: stdout
+  parseable: per_line_independent       # each line MUST be independently parseable
+
+# ────────────────────────────────────────────────────────────────────────────
+# EVENT BASE
+# Every event MUST include these fields.
+# ────────────────────────────────────────────────────────────────────────────
+event_base:
+  required_fields:
+    pri:
+      type: integer
+      description: "RFC 5424 PRI — (facility × 8) + severity. SCOP uses facility 16."
+    msgid:
+      type: string
+      description: "SCOP event type (see msgids section)"
+    room:
+      type: [string, "null"]
+      description: "Derived from subcommand path (see room_model). null for root."
+    msg:
+      type: string
+      rules:
+        - MUST: "be a complete, standalone, human-readable line"
+        - MUST_NOT: "require other fields to be meaningful"
+        - MUST_NOT: "verbatim duplicate other fields"
+
+  optional_fields: [ts, app, pid]
+  field_details:
+    ts:  {type: string, format: ISO 8601}
+    app: {type: string, description: "application name"}
+    pid: {type: integer, description: "process id"}
+
+# ────────────────────────────────────────────────────────────────────────────
+# SEVERITY
+# ────────────────────────────────────────────────────────────────────────────
+severity:
+  values:
+    0: EMERG
+    1: ALERT
+    2: CRIT
+    3: ERR
+    4: WARNING
+    5: NOTICE
+    6: INFO
+    7: DEBUG
+
+  gui_rendering:
+    0-3: {slot: error_modal,    blocking: true}
+    4:   {slot: warning_banner, blocking: false}
+    5-6: {slot: log_line}
+    7:   {slot: suppressed,     note: "suppressed by default; shown when --verbose active"}
+
+# ────────────────────────────────────────────────────────────────────────────
+# ROOM MODEL
+# ────────────────────────────────────────────────────────────────────────────
+room_model:
+  derivation_rule: "subcommand tokens joined by '/'"
+  exclude_from_derivation:
+    - "flag tokens (e.g. -f, --flag)"
+    - "positional operand values (runtime arguments passed to subcommands)"
+  root_room_value: null
+
+  examples:
+    - invocation: "ourapp"                              room: null
+    - invocation: "ourapp snapshot"                    room: "snapshot"
+    - invocation: "ourapp snapshot diff"               room: "snapshot/diff"
+    - invocation: "ourapp snapshot --list"             room: "snapshot"
+    - invocation: "ourapp snapshot diff snap-001 snap-002"  room: "snapshot/diff"
+
+  rules:
+    - MUST: "Room strings be stable across versions"
+    - MUST: "Treat a room string change as a breaking change"
+    - MUST_NOT: "Declare a room explicitly (always derived)"
+    - SHOULD_NOT: "Encode runtime entity identifiers in the room path; entity context is a runtime parameter"
+
+# ────────────────────────────────────────────────────────────────────────────
+# MSGID DEFINITIONS
+# ────────────────────────────────────────────────────────────────────────────
+msgids:
+
+  # ── PAGE family ─────────────────────────────────────────────────────────
+  PAGE_BEGIN:
+    family: PAGE
+    fields:
+      room:     {required: true,  type: [string, "null"]}
+      title:    {required: true,  type: string}
+      subtitle: {required: false, type: string}
+      icon:     {required: false, type: string, constraint: "GitHub gemoji code of form :name: — raw Unicode codepoints MUST NOT be used"}
+      intent:
+        required: false
+        type: string
+        enum: [query, action]
+        default: query
+        semantics:
+          query:  "Build or replace the page view. All slots updated. Used for --status, --list, --help, navigation."
+          action: "An operation is running. Route PROCESS_* to activity slot only. All other slots remain intact."
+    rules:
+      - SHOULD: "intent be included on every PAGE_BEGIN"
+
+  PAGE_END:
+    family: PAGE
+    fields:
+      room: {required: true, type: [string, "null"]}
+    rules:
+      - SHOULD: "msg be empty string"
+
+  # ── PROCESS family ────────────────────────────────────────────────────
+  PROCESS_BEGIN:
+    family: PROCESS
+    fields:
+      id:        {required: true,  type: string}
+      label:     {required: true,  type: string}
+      total:     {required: false, type: integer, note: "Omit when unknown; consumer SHOULD render indeterminate indicator"}
+      dry_run:   {required: false, type: boolean, constraint: "MUST be true on ALL PROCESS_* events when --dry-run is active"}
+      recursive: {required: false, type: boolean}
+
+  PROCESS_UPDATE:
+    family: PROCESS
+    fields:
+      id:      {required: true,  type: string}
+      current: {required: true,  type: integer}
+      total:   {required: false, type: integer}
+      label:   {required: false, type: string}
+
+  PROCESS_END:
+    family: PROCESS
+    fields:
+      id:      {required: true,  type: string}
+      ok:      {required: true,  type: boolean}
+      dry_run: {required: false, type: boolean}
+
+  PROCESS_LOG:
+    family: PROCESS
+    fields:
+      id: {required: true, type: string}
+    rules:
+      - MUST: "carry payload in msg only — no separate message field"
+
+  # ── SCALAR family ────────────────────────────────────────────────────
+  SCALAR_SET:
+    family: SCALAR
+    fields:
+      id:    {required: true, type: string}
+      label: {required: true, type: string}
+      value: {required: true, type: any}
+      type:
+        required: true
+        type: string
+        enum: [number, string, boolean, duration, bytes]
+      unit:         {required: false, type: string}
+      display_hint:
+        required: false
+        type: string
+        enum: [badge]
+        advisory: true   # consumers MAY ignore
+        constraint: "Producers MUST NOT use values not defined in this spec"
+    type_serialization_rules:
+      bytes:
+        value_json_type: integer
+        semantics: "absolute byte count"
+        unit_field: "display denomination (e.g. bytes, KB, MB); formatting is consumer's responsibility"
+      duration:
+        value_format: "ISO 8601 duration string (e.g. PT1M30S)"
+        constraint: "Raw integers MUST NOT be used — unit is ambiguous without the format"
+
+  SCALAR_CLEAR:
+    family: SCALAR
+    fields:
+      id: {required: true, type: string}
+
+  # ── LIST family ────────────────────────────────────────────────────
+  LIST_DECLARE:
+    family: LIST
+    fields:
+      id:      {required: true, type: string}
+      label:   {required: true, type: string}
+      ordered: {required: true, type: boolean, semantics: "true → numbered; false → bullets"}
+
+  LIST_APPEND:
+    family: LIST
+    fields:
+      id:      {required: true, type: string}
+      item_id: {required: true, type: string}
+      value:   {required: true, type: any, note: "MAY be scalar or a JSON object"}
+
+  LIST_UPDATE:
+    family: LIST
+    fields:
+      id:      {required: true, type: string}
+      item_id: {required: true, type: string}
+      value:   {required: true, type: any}
+
+  LIST_REMOVE:
+    family: LIST
+    fields:
+      id:      {required: true, type: string}
+      item_id: {required: true, type: string}
+
+  LIST_END:
+    family: LIST
+    fields:
+      id: {required: true, type: string}
+
+  # ── TABLE family ──────────────────────────────────────────────────
+  TABLE_DECLARE:
+    family: TABLE
+    fields:
+      id:     {required: true,  type: string}
+      label:  {required: true,  type: string}
+      schema:
+        required: true
+        type: array
+        items: string
+        constraint: "MUST be an ordered array of column names"
+      display_hint:
+        required: false
+        type: string
+        enum: [table, chart, cards]
+        advisory: true    # consumers MAY ignore
+
+  TABLE_ROW:
+    family: TABLE
+    fields:
+      id:     {required: true, type: string}
+      row_id: {required: true, type: string}
+      values:
+        required: true
+        type: object
+        constraint: "MUST be a JSON object keyed by column name"
+
+  TABLE_UPDATE:
+    family: TABLE
+    fields:
+      id:     {required: true, type: string}
+      row_id: {required: true, type: string}
+      values: {required: true, type: object}
+
+  TABLE_END:
+    family: TABLE
+    fields:
+      id: {required: true, type: string}
+
+# ────────────────────────────────────────────────────────────────────────────
+# STREAM PROTOCOL
+# ────────────────────────────────────────────────────────────────────────────
+stream_protocol:
+  rules:
+    - MUST: "Every stream begin with PAGE_BEGIN"
+    - MUST: "Every stream end with PAGE_END"
+  PROCESS_lifecycle:
+    sequence: [PROCESS_BEGIN, "PROCESS_UPDATE ×n", PROCESS_END]
+    PROCESS_LOG: "MAY be interspersed between BEGIN and END"
+
+# ────────────────────────────────────────────────────────────────────────────
+# GNU FLAG CONTRACTS
+# ────────────────────────────────────────────────────────────────────────────
+flag_contracts:
+
+  # ── Query flags — produce data output and exit ───────────────────────────
+  # Each response MUST be wrapped in PAGE_BEGIN / PAGE_END.
+
+  help:
+    flags: [--help, -h]
+    sequence:
+      - PAGE_BEGIN: {room: current, intent: query, title: command_name}
+      - LIST_DECLARE: {id: help, ordered: false}
+      - LIST_APPEND: "×n  (value: help_item object — see help_item_schema)"
+      - LIST_END
+      - PAGE_END
+
+    help_item_schema:
+      # Value object for every LIST_APPEND where id = "help"
+      required_fields: [command, description]
+      optional_fields: [kind, params]
+      fields:
+        command:     {type: string, description: "CLI token for this entry"}
+        description: {type: string, description: "Human-readable description"}
+        kind:
+          type: string
+          enum: [action, group]
+          default: action
+          semantics:
+            action: "executable leaf command"
+            group:  "navigates to a subroom"
+        params:
+          type: array
+          required_when: "kind=action AND command accepts one or more inputs"
+          constraint: "Omitting params when kind=action and inputs exist defeats zero-app-knowledge guarantee"
+          item_schema: param_object  # see below
+      params_ordering:
+        rule: "positionals MUST precede flags; required flags MUST precede optional flags; alphabetical by name within each group"
+
+    param_object:
+      # Each element of the params array
+      required_fields: [name, kind]
+      optional_fields: [type, short, metavar, required, repeatable, description]
+      fields:
+        name:       {type: string,  description: "Flag name (e.g. --path) or positional label (e.g. target)"}
+        kind:       {type: string,  enum: [flag, positional]}
+        type:
+          type: string
+          default: string
+          enum: [string, number, boolean, path, datetime, duration, bytes, choice]
+          note: "Types from SCOP-M §5; broader than the SCALAR_SET.type enum"
+        short:      {type: string,  note: "Single-char short flag (e.g. -p). Valid for kind=flag only."}
+        metavar:    {type: string,  description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)"}
+        required:
+          type: boolean
+          default_for_positional: true
+          default_for_flag: false
+        repeatable: {type: boolean, default: false}
+        description: {type: string}
+
+  version:
+    flags: [--version]
+    sequence:
+      - PAGE_BEGIN: {room: null, title: app_name}
+      - SCALAR_SET: {id: version, type: string, value: semver}
+      - PAGE_END
+
+  status:
+    flags: [--status]
+    sequence:
+      - PAGE_BEGIN: {room: current, intent: query, title: context_name}
+      - SCALAR_SET: "×n"
+      - PAGE_END
+    empty_room_rule: "MUST emit PAGE_BEGIN + SCALAR_SET(id=page.empty) + PAGE_END rather than exiting with non-zero status"
+
+  list:
+    flags: [--list, -l]
+    sequence:
+      - PAGE_BEGIN: {room: current, intent: query, title: context_name}
+      - "TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)"
+      - "  OR"
+      - "LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)"
+      - PAGE_END
+    empty_room_rule: "MUST emit PAGE_BEGIN + SCALAR_SET(id=page.empty) + PAGE_END rather than exiting with non-zero status"
+
+  # ── Mode flags — adjust which events are emitted; produce no events ──────
+
+  quiet:
+    flags: [--quiet, -q]
+    suppress:       [PROCESS_LOG, PROCESS_UPDATE]
+    never_suppress: [PAGE_BEGIN, PAGE_END, PROCESS_BEGIN, PROCESS_END, SCALAR_SET,
+                     LIST_DECLARE, LIST_APPEND, LIST_UPDATE, LIST_REMOVE, LIST_END,
+                     TABLE_DECLARE, TABLE_ROW, TABLE_UPDATE, TABLE_END,
+                     "any event with pri ≤ 4"]
+
+  verbose:
+    flags: [--verbose, -v]
+    include: "events with pri = 7"
+    mutual_exclusion: "--quiet"
+    precedence: "MUST take precedence over --quiet"
+
+  all:
+    flags: [--all, -a]
+    effect: "MUST expand scope of LIST and TABLE output"
+
+  # ── Modifier flags — annotate PROCESS_* events; no new MSGIDs ───────────
+
+  dry_run:
+    flags: [--dry-run, -n]
+    adds_field: {dry_run: true}
+    rule: "MUST be present on ALL PROCESS_* events when active"
+
+  recursive:
+    flags: [--recursive, -r]
+    adds_field: {recursive: true}
+
+  force:
+    flags: [--force, -f]
+    adds_field: {force: true}
+
+  # ── Inverse flags ────────────────────────────────────────────────────────
+  inverse_flags:
+    rule: "SHOULD be supported (e.g. --no-quiet, --no-recursive) wherever the positive flag is supported"
+
+  # ── Full flag table ──────────────────────────────────────────────────────
+  all_flags:
+    - {long: --help,      short: -h,  category: query}
+    - {long: --version,   short: null, category: query}
+    - {long: --list,      short: -l,  category: query}
+    - {long: --status,    short: null, category: query}
+    - {long: --all,       short: -a,  category: mode}
+    - {long: --quiet,     short: -q,  category: mode}
+    - {long: --verbose,   short: -v,  category: mode}
+    - {long: --dry-run,   short: -n,  category: modifier}
+    - {long: --recursive, short: -r,  category: modifier}
+    - {long: --force,     short: -f,  category: modifier}
+    - {long: --output,    short: -o,  category: other}
+
+# ────────────────────────────────────────────────────────────────────────────
+# PAGE TEMPLATE (§9)
+# ────────────────────────────────────────────────────────────────────────────
+page_template:
+  discovery_protocol:
+    - "ourapp [subcommand] --status  →  page chrome + stats"
+    - "ourapp [subcommand] --list    →  content"
+    - "ourapp [subcommand] --help    →  actions"
+
+  slots:
+    page_chrome: {source_flag: any,      msgid: PAGE_BEGIN,       gui: "title, subtitle, icon"}
+    stats:       {source_flag: --status, msgid: SCALAR_SET,       gui: "stat cards"}
+    content:     {source_flag: --list,   msgid: "TABLE or LIST",  gui: "grid, list"}
+    actions:     {source_flag: --help,   msgid: "LIST(id=help)",  gui: "buttons, command palette"}
+    activity:    {source_flag: command,  msgid: "PROCESS_*",      gui: "progress bar, spinner"}
+
+  optional_slots:
+    description: {convention: "SCALAR_SET with id=page.description"}
+    chart:       {convention: "TABLE_DECLARE with display_hint=chart"}
+    empty_state: {convention: "SCALAR_SET with id=page.empty"}
+    badge:       {convention: "SCALAR_SET with display_hint=badge"}
+
+# ────────────────────────────────────────────────────────────────────────────
+# CONSUMER ROUTING TABLE (§10)
+# ────────────────────────────────────────────────────────────────────────────
+consumer_routing:
+  routes:
+    - condition: "PAGE_BEGIN, intent=query, same room"
+      action:    "update page — merge slot content; existing slots not in this stream persist"
+    - condition: "PAGE_BEGIN, intent=query, different room"
+      action:    "replace page — navigate to new room; all slots replaced"
+    - condition: "PAGE_BEGIN, intent=action"
+      action:    "open activity overlay — activity slot only; all other slots unchanged"
+    - condition: "SCALAR_SET"
+      slot:      stats_area
+    - condition: "TABLE_*"
+      slot:      content_area
+    - condition: "LIST_*, id=help"
+      slot:      actions_area
+    - condition: "LIST_*, id≠help"
+      slot:      content_area
+    - condition: "PROCESS_*"
+      slot:      activity_indicator
+    - condition: "PAGE_END, intent=query"
+      action:    "end of stream; slot update complete; page remains visible"
+    - condition: "PAGE_END, intent=action"
+      action:    "close activity overlay"
+    - condition: "pri 0–3"
+      slot:      error_modal
+      blocking:  true
+    - condition: "pri 4"
+      slot:      warning_banner
+      blocking:  false
+    - condition: "pri 5–6"
+      slot:      log_area
+    - condition: "pri 7"
+      action:    "suppressed unless --verbose"
+    - condition: "unknown MSGID"
+      action:    "route to log_area using msg"
+    - condition: "unknown field"
+      action:    "ignore without error"
+
+  rules:
+    - MUST: "maintain independent slot state per id for PROCESS_* events"
+    - MUST_NOT: "assume a 1:1 mapping between a room and an active process"
+    - MUST: "if stdout closes or process exits before PAGE_END, synthesise a terminal error state using partial content — MUST NOT remain in indeterminate loading state"
+
+# ────────────────────────────────────────────────────────────────────────────
+# CONFORMANCE CHECKLIST
+# ────────────────────────────────────────────────────────────────────────────
+conformance:
+  producer_MUST:
+    - "Emit NDJSON to stdout"
+    - "Include pri, msgid, room, msg in every event"
+    - "Ensure msg is a complete, standalone, human-readable line"
+    - "Wrap every stream in PAGE_BEGIN / PAGE_END"
+    - "Derive room from subcommand path per §6"
+    - "Use only MSGIDs defined in §7"
+    - "Implement --help, --version, --status, --list per §8.1"
+    - "Emit a well-formed empty page (PAGE_BEGIN + SCALAR_SET[id=page.empty] + PAGE_END) when a room has no data for --status or --list"
+    - "Encode all output as UTF-8"
+
+  producer_SHOULD:
+    - "Implement --quiet, --verbose"
+    - "Implement --dry-run"
+    - "Include intent on every PAGE_BEGIN: query for discovery flags, action for command execution"
+    - "Design rooms so --status and --list are invocable without positional arguments"
+    - "NOT encode runtime entity identifiers in room path"
+    - "Conform to POSIX.1 Utility Syntax Guidelines (single-hyphen short options; -- to end option processing; operands following options)"
+
+  consumer_MUST:
+    - "Parse NDJSON line-by-line"
+    - "Route events per §10 using intent field on PAGE_BEGIN"
+    - "Render msg as fallback for unknown MSGIDs"
+    - "Ignore unknown MSGIDs without error"
+    - "Ignore unknown fields without error"
+    - "Map RFC 5424 severity per §4.2"
+    - "Synthesise terminal error state if stdout closes before PAGE_END — MUST NOT stay in loading state"
+    - "Sanitise string values before rendering in HTML or injection-sensitive contexts"
+    - "NOT suppress dry_run=true annotations"
+
+  consumer_SHOULD:
+    - "Implement the three-flag protocol (§9)"
+    - "Support optional slots (§9)"
+    - "Implement stream size limits"
+
+# ────────────────────────────────────────────────────────────────────────────
+# SECURITY RULES
+# ────────────────────────────────────────────────────────────────────────────
+security:
+  - rule: "String values are untrusted; consumers MUST sanitise before rendering in HTML or injection-sensitive contexts"
+  - rule: "Consumers SHOULD implement stream size limits against unbounded event streams"
+  - rule: "Producers MUST NOT include secrets, credentials, or PII in events"
+  - rule: "Consumers MUST NOT suppress dry_run=true annotations; users MUST be able to distinguish dry-run output from real output"
+
+# ────────────────────────────────────────────────────────────────────────────
+# CROSS-REFERENCE: SCOP vs SCOP-M TYPE SYSTEMS
+# The help-item param.type (§8.1) uses SCOP-M types (broader set).
+# SCALAR_SET.type uses the narrower wire-type set.
+# ────────────────────────────────────────────────────────────────────────────
+type_systems:
+  scalar_set_wire_types:          # SCOP §7.3 — SCALAR_SET.type enum
+    enum: [number, string, boolean, duration, bytes]
+
+  param_types:                    # SCOP §8.1 / SCOP-M §5 — param.type enum
+    enum: [string, number, boolean, path, datetime, duration, bytes, choice]
+    wire_type_mapping:            # how manifest types serialise on the wire
+      string:   string
+      number:   number
+      boolean:  boolean
+      path:     string
+      datetime: string            # ISO 8601 string
+      duration: duration          # ISO 8601 duration string
+      bytes:    bytes             # JSON integer (absolute byte count)
+      choice:   string            # MUST be a member of choices[]
+
+  note: >
+    path, datetime, and choice are manifest-level annotations over string.
+    They carry input validation and GUI widget hints only; they do not appear
+    as SCALAR_SET.type values at runtime.
