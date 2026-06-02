@@ -6,7 +6,7 @@ The goal is to focus on best-practice recommendations that genuinely reduce deci
 
 ## Standards
 
-Source's I/O layer implements **SCOP (Structured CLI Output Protocol) v0.1.0-draft** — an open specification for structured CLI output that is simultaneously human-readable as plain text and automatically translatable to GUI. See `SCOP.md`.
+Source's I/O layer implements **SCOP (Structured CLI Output Protocol) v0.1.2-draft** — an open specification for structured CLI output that is simultaneously human-readable as plain text and automatically translatable to GUI. See `SCOP.md`.
 
 | Document | Implements |
 | --- | --- |
@@ -140,6 +140,7 @@ select = [
 | 10 | **`utils/` module allowlist** — each permitted name MAY exist as either `name.py` or `name/`; no other modules or packages at the `utils/` root are permitted | ast-grep |
 | 11 | **Depth import rule** — a file may only import from deeper modules; never from a neighbour or anything closer to root. `app/dispatcher.py` resolves this by placing concrete apps one level deeper under `app/registry/` | ast-grep |
 | 12 | **`TYPE_CHECKING` banned** — all imports must work at runtime; use `from __future__ import annotations` for forward references. Guards hide circular-import violations that should be fixed structurally. | ruff `TID251` banned-api + `FA` |
+| 13 | **Config split** — config schema lives in `models/` as a frozen type; config loading lives in `adapters/` behind a `ConfigPort`; `services/` may only receive `AppConfig` via constructor injection, never load it directly | import-linter + ast-grep |
 
 ## Import Allowlist
 
@@ -194,6 +195,73 @@ The standard library is universally permitted in every layer without restriction
 "*/models/*"       = ["TID251"]
 "tests/*"          = ["S101", "ARG"]
 ```
+
+## Config
+
+Config has two distinct jobs that must not be conflated: reading config from disk (I/O, therefore infrastructure) and providing config values to domain logic (a typed contract). These map exactly onto the existing adapter/port split.
+
+### Placement
+
+| Concern | Layer | File | Why |
+| --- | --- | --- | --- |
+| Config schema | `models/` | `config.py` | Frozen value type — no I/O, no methods |
+| Config contract | `ports/` | `config_port.py` | Services depend on this abstraction, never on the adapter |
+| File reading + deserialisation | `adapters/` | `config_adapter.py` | I/O lives here; delegates to `utils/fmt` for TOML parsing |
+| Injection | `app/` | `registry/` | Wiring is `app/`'s job — constructs `ConfigAdapter`, passes via port |
+
+No new layer is introduced. Config slots into the existing hexagonal structure without special cases.
+
+### Schema (`models/config.py`)
+
+```python
+@dataclass(frozen=True)
+class AppConfig:
+    watch_path: Path
+    snapshot_format: str
+    max_snapshots: int
+```
+
+A plain frozen dataclass. Satisfies Rule 6. No file I/O, no third-party imports.
+
+### Port (`ports/config_port.py`)
+
+```python
+class ConfigPort(Port):
+    @abstractmethod
+    def load(self) -> AppConfig: ...
+```
+
+`services/` receives `ConfigPort` via constructor injection and calls `load()` through the abstraction. It never imports `ConfigAdapter` or `utils/fmt`.
+
+### Adapter (`adapters/config_adapter.py`)
+
+```python
+class ConfigAdapter(Adapter):
+    port = ConfigPort
+
+    def load(self) -> AppConfig:
+        raw = utils.fmt.load_toml(self._path)
+        return AppConfig(**raw)
+```
+
+`utils/fmt` already covers TOML (`tomllib`/`tomli`) — no new `utils/` submodule is needed. The `TID251` ban on `tomli` already carves out `*/utils/fmt/*`, so no ruff config changes are required.
+
+### Enforcement
+
+Rule 13 is enforced by the existing toolchain with no new tool required:
+
+- **import-linter** — `services/` is already forbidden from importing `adapters/`; this catches any attempt to load config directly
+- **ast-grep** (Rule 3) — `config_port.py` must contain `ConfigPort(Port)`; `config_adapter.py` must contain `ConfigAdapter(Adapter)` with `port = ConfigPort`
+- **ast-grep** (Rule 4) — port↔adapter parity check covers `config_port.py` ↔ `config_adapter.py` automatically
+- **ruff + ty** (Rule 6) — `AppConfig` frozen enforcement is handled by existing frozen-dataclass rules
+
+### What to avoid
+
+A freestanding `config/` layer or a `config.py` at root that multiple layers import directly would:
+
+- Break Rule 11 (depth import rule) — `services/` importing from a sibling `config/` is a lateral import
+- Break Rule 2 — it bypasses the port abstraction, creating a coupling import-linter cannot see through
+- Break Rule 1 — loading a file in `services/` or `app/` violates the two-tier infrastructure boundary
 
 ## AppDispatcher
 
