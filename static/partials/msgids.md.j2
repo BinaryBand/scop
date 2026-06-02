@@ -1,0 +1,106 @@
+{%- set msgids = north_star.msgids -%}
+{%- macro field_table(msgid_list) -%}
+| MSGID | Required | Optional |
+| --- | --- | --- |
+{%- for name in msgid_list %}
+{%- set mdef = msgids[name] %}
+{%- set ns_r = namespace(req=[]) %}
+{%- set ns_o = namespace(opt=[]) %}
+{%- for fname, fdef in mdef.fields.items() %}
+{%- if fdef.required %}
+{%- set ns_r.req = ns_r.req + ['`' + fname + '`'] %}
+{%- else %}
+{%- set ns_o.opt = ns_o.opt + ['`' + fname + '`'] %}
+{%- endif %}
+{%- endfor %}
+| `{{ name }}` | {{ ns_r.req | join(', ') }} | {{ ns_o.opt | join(', ') }} |
+{%- endfor %}
+{%- endmacro -%}
+## 7. Event Vocabulary
+
+All MSGIDs are grouped into families by data type. Consumers route events to GUI slots by family (§10).
+
+### 7.1 PAGE — Page Frame
+
+Every stream MUST begin with `PAGE_BEGIN` and end with `PAGE_END`. `PAGE_END.msg` SHOULD be empty.
+
+{{ field_table(['PAGE_BEGIN', 'PAGE_END']) }}
+
+The `icon` field, when present, MUST be a GitHub gemoji code of the form `:name:` (e.g., `:camera_with_flash:`). Raw Unicode codepoints MUST NOT be used. CLI renderers print or ignore the string as-is; GUI renderers map it to an icon asset.
+
+The `intent` field declares how the consumer MUST integrate this stream into the current view. If omitted, consumers MUST treat it as `"query"`.
+
+{%- set intent_def = msgids.PAGE_BEGIN.fields.intent %}
+| `intent` value | Consumer behaviour |
+| --- | --- |
+{%- for value, behaviour in intent_def.semantics.items() %}
+| `"{{ value }}"` | {{ behaviour }} |
+{%- endfor %}
+
+```json
+{"pri": 6, "msgid": "PAGE_BEGIN", "room": "snapshot", "title": "Snapshots", "subtitle": "Manage and compare snapshots", "icon": ":camera_with_flash:", "intent": "query", "msg": "=== Snapshots ==="}
+{"pri": 6, "msgid": "PAGE_END", "room": "snapshot", "msg": ""}
+```
+
+### 7.2 PROCESS — Running Operation
+
+Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
+
+{{ field_table(['PROCESS_BEGIN', 'PROCESS_UPDATE', 'PROCESS_END', 'PROCESS_LOG']) }}
+
+`PROCESS_LOG` carries its payload in `msg` only — no separate `message` field. `msg` is already globally required and serves as the log line directly.
+
+```json
+{"pri": 6, "msgid": "PROCESS_BEGIN", "room": "snapshot", "id": "snap", "label": "Hashing files", "total": 42, "msg": "Hashing files (42)"}
+{"pri": 6, "msgid": "PROCESS_UPDATE", "room": "snapshot", "id": "snap", "current": 21, "total": 42, "msg": "21 of 42: intro.md"}
+{"pri": 6, "msgid": "PROCESS_LOG", "room": "snapshot", "id": "snap", "msg": "snap: skipping binary file"}
+{"pri": 6, "msgid": "PROCESS_END", "room": "snapshot", "id": "snap", "ok": true, "msg": "Hashing complete"}
+```
+
+### 7.3 SCALAR — Single Named Value
+
+{%- set scalar_type_enum = msgids.SCALAR_SET.fields.type.enum %}
+`type` MUST be one of: `{{ scalar_type_enum | join('`, `') }}`.
+
+**Serialization of abstract types:**
+
+{%- set ser = msgids.SCALAR_SET.type_serialization_rules %}
+- `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the {{ ser.bytes.unit_field }}; formatting is the consumer's responsibility.
+- `duration` — `value` MUST be {{ ser.duration.value_format }}. {{ ser.duration.constraint }}.
+
+{{ field_table(['SCALAR_SET', 'SCALAR_CLEAR']) }}
+
+{%- set dh = msgids.SCALAR_SET.fields.display_hint %}
+`display_hint` is OPTIONAL and advisory; consumers MAY ignore it. Defined values: `"{{ dh.enum | join('"`, `"') }}"`. {{ dh.constraint }}.
+
+```json
+{"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "tracked", "label": "Tracked files", "value": 1042, "type": "number", "unit": "files", "msg": "Tracked files: 1042 files"}
+{"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "index_size", "label": "Index size", "value": 12582912, "type": "bytes", "unit": "MB", "msg": "Index size: 12 MB"}
+{"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "elapsed", "label": "Elapsed", "value": "PT1M30S", "type": "duration", "msg": "Elapsed: 1m 30s"}
+```
+
+### 7.4 LIST — Sequence
+
+`ordered: true` renders as numbered; `false` as bullets. `value` MAY be scalar or a JSON object.
+
+{{ field_table(['LIST_DECLARE', 'LIST_APPEND', 'LIST_UPDATE', 'LIST_REMOVE', 'LIST_END']) }}
+
+```json
+{"pri": 6, "msgid": "LIST_DECLARE", "room": "snapshot", "id": "changes", "label": "Changed files", "ordered": false, "msg": "Changed files"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "changes", "item_id": "f1", "value": "docs/intro.md", "msg": "+ docs/intro.md"}
+{"pri": 6, "msgid": "LIST_UPDATE", "room": "snapshot", "id": "changes", "item_id": "f1", "value": "docs/intro.md (modified)", "msg": "~ docs/intro.md (modified)"}
+{"pri": 6, "msgid": "LIST_END", "room": "snapshot", "id": "changes", "msg": "1 changed file"}
+```
+
+### 7.5 TABLE — Relation
+
+{%- set tdh = msgids.TABLE_DECLARE.fields.display_hint %}
+`schema` MUST be an ordered array of column names. `values` MUST be a JSON object keyed by column name. `display_hint` is OPTIONAL and advisory (`"{{ tdh.enum | join('"`, `"') }}"`); consumers MAY ignore it.
+
+{{ field_table(['TABLE_DECLARE', 'TABLE_ROW', 'TABLE_UPDATE', 'TABLE_END']) }}
+
+```json
+{"pri": 6, "msgid": "TABLE_DECLARE", "room": "snapshot", "id": "snaps", "label": "Snapshots", "schema": ["name", "files", "size", "date"], "msg": "Snapshots"}
+{"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": "1.2MB", "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
+{"pri": 6, "msgid": "TABLE_END", "room": "snapshot", "id": "snaps", "msg": "1 snapshot"}
+```

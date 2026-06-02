@@ -1,8 +1,8 @@
 # SCOP-M: Structured CLI Output Protocol — Manifest Format
 
-**Version:** 0.1.2-draft  
-**Status:** Draft Specification  
-**License:** CC0 1.0 Universal (Public Domain)  
+**Version:** 0.1.2-draft
+**Status:** Draft Specification
+**License:** CC0 1.0 Universal (Public Domain)
 **Companion to:** SCOP v0.1.2-draft
 
 ---
@@ -45,12 +45,12 @@ A SCOP-M file is OPTIONAL. A producer that does not supply one is still SCOP-con
 
 ## 2. Terminology
 
-**Manifest** — a `scop.toml` file conforming to this specification.  
-**Room** — a page context; corresponds directly to SCOP room strings (§6 of SCOP).  
-**Command** — an action available within a room; maps to a CLI subcommand or flag combination.  
-**Param** — a typed, named input accepted by a command.  
-**Stat** — a named scalar value emitted by `--status`; maps to a `SCALAR_SET` event.  
-**List schema** — the column definition for `--list` output; maps to `TABLE_DECLARE.schema`.  
+**Manifest** — a `scop.toml` file conforming to this specification.
+**Room** — a page context; corresponds directly to SCOP room strings (§6 of SCOP).
+**Command** — an action available within a room; maps to a CLI subcommand or flag combination.
+**Param** — a typed, named input accepted by a command.
+**Stat** — a named scalar value emitted by `--status`; maps to a `SCALAR_SET` event.
+**List schema** — the column definition for `--list` output; maps to `TABLE_DECLARE.schema`.
 **Global param** — a param inherited by every command in every room.
 
 ---

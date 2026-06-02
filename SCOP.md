@@ -1,7 +1,7 @@
 # Structured CLI Output Protocol (SCOP)
 
-**Version:** 0.1.2-draft  
-**Status:** Draft Specification  
+**Version:** 0.1.2-draft
+**Status:** Draft Specification
 **License:** CC0 1.0 Universal (Public Domain)
 
 ---
@@ -37,13 +37,13 @@ SCOP is a composition, not a replacement:
 
 ## 2. Terminology
 
-**Producer** — a SCOP-conforming CLI application that emits events.  
-**Consumer** — software that reads a SCOP event stream and renders it.  
-**Event** — a single NDJSON line emitted by a producer.  
-**Stream** — the ordered sequence of events from one command invocation.  
-**MSGID** — a string identifier classifying an event by its data type (§7).  
-**Room** — a page context derived from the subcommand path (§6).  
-**Page** — a GUI display unit corresponding to one room, assembled from one or more streams.  
+**Producer** — a SCOP-conforming CLI application that emits events.
+**Consumer** — software that reads a SCOP event stream and renders it.
+**Event** — a single NDJSON line emitted by a producer.
+**Stream** — the ordered sequence of events from one command invocation.
+**MSGID** — a string identifier classifying an event by its data type (§7).
+**Room** — a page context derived from the subcommand path (§6).
+**Page** — a GUI display unit corresponding to one room, assembled from one or more streams.
 **Slot** — a named region in a page layout; events are routed to slots by MSGID family.
 
 ---
@@ -163,10 +163,10 @@ The `icon` field, when present, MUST be a GitHub gemoji code of the form `:name:
 
 The `intent` field declares how the consumer MUST integrate this stream into the current view. If omitted, consumers MUST treat it as `"query"`.
 
-| `intent` value | Consumer behaviour                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------------------- |
-| `"query"`      | Build or replace the page view. All slots are updated. Used for `--status`, `--list`, `--help`, and navigation. |
-| `"action"`     | An operation is running. Route `PROCESS_*` events to the activity slot only. All other slots remain intact.     |
+| `intent` value | Consumer behaviour                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| `"query"`      | Build or replace the page view. All slots updated. Used for --status, --list, --help, navigation. |
+| `"action"`     | An operation is running. Route PROCESS\_\* to activity slot only. All other slots remain intact.  |
 
 ```json
 {"pri": 6, "msgid": "PAGE_BEGIN", "room": "snapshot", "title": "Snapshots", "subtitle": "Manage and compare snapshots", "icon": ":camera_with_flash:", "intent": "query", "msg": "=== Snapshots ==="}
@@ -175,7 +175,7 @@ The `intent` field declares how the consumer MUST integrate this stream into the
 
 ### 7.2 PROCESS — Running Operation
 
-Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` *n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
+Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
 
 | MSGID            | Required        | Optional                        |
 | ---------------- | --------------- | ------------------------------- |
@@ -199,15 +199,15 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` *n → `PROCESS_END`. Omit `tota
 
 **Serialization of abstract types:**
 
-- `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the display denomination (e.g. `"bytes"`, `"KB"`, `"MB"`); formatting is the consumer's responsibility.
-- `duration` — `value` MUST be an ISO 8601 duration string (e.g. `"PT1M30S"`). Raw integers MUST NOT be used; the unit is ambiguous without the format.
+- `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the display denomination (e.g. bytes, KB, MB); formatting is consumer's responsibility; formatting is the consumer's responsibility.
+- `duration` — `value` MUST be ISO 8601 duration string (e.g. PT1M30S). Raw integers MUST NOT be used — unit is ambiguous without the format.
 
 | MSGID          | Required                       | Optional               |
 | -------------- | ------------------------------ | ---------------------- |
 | `SCALAR_SET`   | `id`, `label`, `value`, `type` | `unit`, `display_hint` |
 | `SCALAR_CLEAR` | `id`                           |                        |
 
-`display_hint` is OPTIONAL and advisory; consumers MAY ignore it. Defined values: `"badge"`. Producers MUST NOT use `display_hint` values not defined in this spec.
+`display_hint` is OPTIONAL and advisory; consumers MAY ignore it. Defined values: `"badge"`. Producers MUST NOT use values not defined in this spec.
 
 ```json
 {"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "tracked", "label": "Tracked files", "value": 1042, "type": "number", "unit": "files", "msg": "Tracked files: 1042 files"}
@@ -261,7 +261,7 @@ Query flags produce data output and exit. Each response MUST be wrapped in `PAGE
 
 **`--help` / `-h`**
 
-```proto
+```
 PAGE_BEGIN (room: current, title: command name, intent: "query")
 LIST_DECLARE (id: "help", ordered: false)
 LIST_APPEND *n (value: help-item object — see schema below)
