@@ -1,12 +1,24 @@
 {%- set fc = north_star.get('flag_contracts', {}) -%}
 {%- set all_flags = fc.get('all_flags', []) -%}
 
+{% set has_pending = false %}
+{% for f in all_flags %}
+	{% if f.status and ('pending' in (f.status|string)) %}
+		{% set has_pending = true %}
+	{% endif %}
+{% endfor %}
+
 | Flag | Short | Category |
 | --- | --- | --- |
-{%- for f in all_flags %}
-| `{{ f.long }}` | {%- if f.short %}`{{ f.short }}`{%- else %} {%- endif %} | {{ f.category }}{%- if f.status %} ({{ f.status }}){%- endif %} |
-{%- endfor %}
+{% set ns = namespace(rows=[]) %}
+{% for f in all_flags %}
+	{% set short = ('`' ~ f.short ~ '`') if f.short else ' ' %}
+	{% set marker = ' †' if (f.status and ('pending' in (f.status|string))) else '' %}
+	{% set row = ('| `' ~ f.long ~ '` | ' ~ short ~ ' | ' ~ f.category ~ marker ~ ' |') %}
+	{% set ns = namespace(rows=ns.rows + [row]) %}
+{% endfor %}
+{{ ns.rows | join('\n') }}
 
-{%- if fc -%}
-Details for specific flag contracts appear in §8 (GNU Flag Contract).
+{%- if has_pending %}
+*† Contract not yet defined; see pending additions.*
 {%- endif %}

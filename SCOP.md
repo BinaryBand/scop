@@ -69,17 +69,19 @@ Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): s
 
 | Flag | Short | Category |
 | --- | --- | --- |
-| `--help` |`-h` | query |
-| `--version` | | query |
-| `--list` |`-l` | query |
-| `--status` | | query |
-| `--all` |`-a` | mode |
-| `--quiet` |`-q` | mode |
-| `--verbose` |`-v` | mode |
-| `--dry-run` |`-n` | modifier |
-| `--recursive` |`-r` | modifier |
-| `--force` |`-f` | modifier |
-| `--output` |`-o` | other (pending_contract) |Details for specific flag contracts appear in §8 (GNU Flag Contract).
+| `--help` | `-h` | query |
+| `--version` |  | query |
+| `--list` | `-l` | query |
+| `--status` |  | query |
+| `--all` | `-a` | mode |
+| `--quiet` | `-q` | mode |
+| `--verbose` | `-v` | mode |
+| `--dry-run` | `-n` | modifier |
+| `--recursive` | `-r` | modifier |
+| `--force` | `-f` | modifier |
+| `--output` | `-o` | other † |
+
+*† Contract not yet defined; see pending additions.*
 
 Inverse flags (`--no-quiet`, `--no-recursive`, etc.) SHOULD be supported where the positive flag is supported.
 

@@ -67,7 +67,7 @@ SCOP is a composition, not a replacement:
 
 Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags; each flag's event contract is defined in §8.
 
-{% include 'partials/flags.md.j2' %}
+{{ flags_table }}
 
 Inverse flags (`--no-quiet`, `--no-recursive`, etc.) SHOULD be supported where the positive flag is supported.
 

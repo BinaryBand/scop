@@ -129,6 +129,31 @@ def render_templates():
         except Exception as e:
             print(f"Error reading NORTH_STAR.yaml: {e}", file=sys.stderr)
 
+    # Build flags table markdown from NORTH_STAR.yaml::flag_contracts
+    flags_table = ""
+    try:
+        fc = ns.get("flag_contracts", {}) or {}
+        all_flags = fc.get("all_flags", []) or []
+        lines = []
+        lines.append("| Flag | Short | Category |")
+        lines.append("| --- | --- | --- |")
+        pending_exists = False
+        for f in all_flags:
+            long = f.get("long") if isinstance(f, dict) else str(f)
+            short = f.get("short") if isinstance(f, dict) else None
+            short_display = f"`{short}`" if short else ""
+            category = f.get("category", "") if isinstance(f, dict) else ""
+            is_pending = isinstance(f, dict) and f.get("status") and "pending" in str(f.get("status"))
+            marker = " †" if is_pending else ""
+            if is_pending:
+                pending_exists = True
+            lines.append(f"| `{long}` | {short_display} | {category}{marker} |")
+        flags_table = "\n".join(lines)
+        if pending_exists:
+            flags_table = flags_table + "\n\n*† Contract not yet defined; see pending additions.*"
+    except Exception:
+        flags_table = ""
+
     pattern = "*.j2"
     written = []
 
@@ -141,7 +166,7 @@ def render_templates():
         out_path = repo_root / out_name
 
         template = env.get_template(tpl_path.name)
-        rendered = template.render({"version": version, "severity_rows": severity_rows, "north_star": ns})
+        rendered = template.render({"version": version, "severity_rows": severity_rows, "north_star": ns, "flags_table": flags_table})
 
         out_path.write_text(rendered, encoding='utf-8')
         written.append(out_path)
