@@ -237,6 +237,7 @@ The `name` field is the display label shown in the GUI. The `exec` field is the 
 | `name` | string | ✓ | Display label shown in GUI and `--help` output |
 | `exec` | string | | CLI token to invoke. Defaults to `name` if omitted. MUST be provided when `name` differs from the CLI token |
 | `description` | string | ✓ | Maps to `LIST_APPEND.value.description` in `--help` output |
+| `kind` | string | | `"action"` (executes in the current room) or `"group"` (navigates to a subroom). Default: `"action"`. Maps to `LIST_APPEND.value.kind` in `--help` output |
 | `navigates` | string | | Room `id` this command navigates to after execution. MUST match SCOP §6 room derivation. Omit if the command stays in the current room |
 
 > **Routing rule:** `navigates` MUST equal the room `id` that SCOP will derive at runtime from the invocation. For `ourapp snap [args]`, SCOP derives room `"snap"`, so `navigates = "snap"`. Setting `navigates` to an undeclared room `id` is a conformance violation.
@@ -422,6 +423,16 @@ icon     = ":package:"
   description = "List all snapshots"
   navigates   = "log"
 
+# ── Log room ─────────────────────────────────────────────────────────────────
+[[room]]
+id       = "log"
+title    = "Log"
+subtitle = "Snapshot history"
+icon     = ":scroll:"
+
+  [room.list]
+  schema = ["name", "files", "size", "date"]
+
 # ── Snap room ────────────────────────────────────────────────────────────────
 [[room]]
 id       = "snap"
@@ -524,10 +535,11 @@ icon     = ":floppy_disk:"
   description = "Restore a snapshot"
 
     [[room.command.param]]
-    name     = "name"
-    kind     = "positional"
-    type     = "string"
-    required = true
+    name        = "name"
+    kind        = "positional"
+    type        = "string"
+    required    = true
+    description = "Snapshot name to restore"
 ```
 
 ---

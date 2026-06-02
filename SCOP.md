@@ -345,6 +345,8 @@ LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)
 PAGE_END
 ```
 
+> **Tiebreaker rule:** use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
+
 ### 8.2 Mode Flags
 
 Mode flags adjust which events are emitted. They produce no events of their own. `--quiet` and `--verbose` are mutually exclusive; `--verbose` MUST take precedence.
@@ -386,6 +388,8 @@ ourapp [subcommand] --help     →  actions
 | Content | `--list` | `TABLE` or `LIST` | grid, list |
 | Actions | `--help` | `LIST` (id="help") | buttons, palette |
 | Activity | any command | `PROCESS_*` | progress, spinner |
+
+> **Routing note:** the `intent` field on `PAGE_BEGIN` — not the triggering flag — is the consumer's actual routing discriminant. `"query"` updates or replaces the page; `"action"` opens an activity overlay leaving all other slots intact. See §10 for the full routing table.
 
 Each call is independent. A page MAY be built from a subset.
 

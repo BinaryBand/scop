@@ -278,7 +278,7 @@ classDiagram
 def dispatch(self, command: str, args: dict) -> StreamPort:
     app    = self._resolve(command)
     stream = self._runtime.create_stream()          # RuntimeAdapter injects asyncio.Queue
-    self._runtime.spawn(app.run(args, stream), stream)  # RuntimeAdapter calls create_task
+    self._runtime.spawn(app.run(args, stream), stream)  # stream passed so RuntimeAdapter can resolve(ok=False) on task failure
     return stream                                   # cli.py receives StreamPort only
 ```
 
@@ -323,11 +323,11 @@ Full specification: `SCOP.md` §7. The `PROCESS_*` family is the minimum viable 
 | `PROCESS_BEGIN` | Start a named operation | `id`, `label` |
 | `PROCESS_UPDATE` | Update progress | `id`, `current` |
 | `PROCESS_END` | Complete an operation | `id`, `ok` |
-| `PROCESS_LOG` | Freeform log line within an operation | `id`, `message` |
+| `PROCESS_LOG` | Freeform log line within an operation | `id` |
 
 The `id` field ties events to a named operation. Nested or parallel operations use distinct `id` values — no new types required.
 
-`ResolvedResult.data` must be a `PAGE_END` message.
+`ResolvedResult.data` must be a `PAGE_END` message. `PAGE_END` is the mandatory stream terminator per SCOP §7.1 — resolving with it ensures every stream ends with a well-formed closing frame, even when the app raises unexpectedly and `RuntimeAdapter.spawn` must synthesize the terminal event.
 
 > `MSGID` must be one of the values defined in `SCOP.md` §7.
 
