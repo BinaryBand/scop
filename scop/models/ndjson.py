@@ -9,15 +9,13 @@ basic semantic validations are enforced (single-line `msg`, non-negative
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, ClassVar, Dict, List, Literal, Optional
+from typing import Annotated, Any, ClassVar, Dict, List, Literal, Optional
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    StrictBool,
-    StrictInt,
-    StrictStr,
+    StringConstraints,
     field_validator,
     model_validator,
 )
@@ -25,12 +23,19 @@ from pydantic import (
 TYPE = Literal["number", "string", "boolean", "duration", "bytes"]
 INTENT = Literal["query", "action"]
 
-Text = StrictStr
-Int = StrictInt
-Flag = StrictBool
+Text = Annotated[str, StringConstraints(strict=True)]
+SingleLineText = Annotated[
+    str,
+    StringConstraints(strict=True, pattern=r"^[^\r\n]*$"),
+]
+Int = Annotated[int, Field(strict=True)]
+NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
+Flag = Annotated[bool, Field(strict=True)]
+Pri = Annotated[int, Field(strict=True, ge=0, le=191)]
 
 OptText = Optional[Text]
 OptInt = Optional[Int]
+OptNonNegativeInt = Optional[NonNegativeInt]
 OptFlag = Optional[Flag]
 
 JSONMap = Dict[Text, Any]
@@ -120,15 +125,15 @@ class NDJSONEvent(BaseModel):
     )
 
     # Core Required Fields (§4.2 & §5)
-    pri: Int = Field(..., description="RFC 5424 PRI — facility*8 + severity")
+    pri: Pri = Field(..., description="RFC 5424 PRI — facility*8 + severity")
     msgid: MSGID = Field(..., description="SCOP message identifier")
     room: OptText = Field(..., description="Derived room path or null")
-    msg: Text = Field(..., description="Human-readable single-line message")
+    msg: SingleLineText = Field(..., description="Human-readable single-line message")
 
     # Optional Infrastructure Fields (§4.2)
     ts: Optional[datetime] = Field(None, description="ISO 8601 timestamp")
     app: OptText = Field(None, description="Application name")
-    pid: OptInt = Field(None, description="Process id")
+    pid: OptNonNegativeInt = Field(None, description="Process id")
 
     # Dynamic Vocabulary Fields (§7)
     title: OptText = Field(None, description="PAGE_BEGIN title")
@@ -140,8 +145,8 @@ class NDJSONEvent(BaseModel):
 
     id: OptText = Field(None, description="Identifier for dynamic structural items")
     label: OptText = Field(None, description="Human readable label")
-    total: OptInt = Field(None, description="Total expected steps or size")
-    current: OptInt = Field(None, description="Current progress step")
+    total: OptNonNegativeInt = Field(None, description="Total expected steps or size")
+    current: OptNonNegativeInt = Field(None, description="Current progress step")
     ok: OptFlag = Field(None, description="Process termination success status")
     dry_run: OptFlag = Field(None, description="Flag indicating mock action execution")
     recursive: OptFlag = Field(
@@ -188,36 +193,10 @@ class NDJSONEvent(BaseModel):
             raise TypeError("pri must be an integer, not a boolean")
         if not isinstance(v, int):
             raise TypeError("pri must be an integer")
-        if v < 0:
-            raise ValueError("pri must be non-negative")
-        if v > 191:
-            raise ValueError("pri must be between 0 and 191 inclusive per RFC 5424")
         # SCOP uses facility 16 per spec — enforce facility bits (facility = pri // 8)
         facility = v // 8
         if facility != 16:
             raise ValueError("pri facility must be 16 for SCOP events")
-        return v
-
-    @field_validator("msg", mode="before")
-    @classmethod
-    def _validate_msg(cls, v):
-        if not isinstance(v, str):
-            raise TypeError("msg must be a string")
-        if "\n" in v or "\r" in v:
-            raise ValueError("msg must be a single line (no newlines)")
-        return v
-
-    @field_validator("pid", mode="before")
-    @classmethod
-    def _validate_pid(cls, v):
-        if v is None:
-            return v
-        if isinstance(v, bool):
-            raise TypeError("pid must be an integer, not a boolean")
-        if not isinstance(v, int):
-            raise TypeError("pid must be an integer")
-        if v < 0:
-            raise ValueError("pid must be non-negative")
         return v
 
     @model_validator(mode="after")
