@@ -175,7 +175,7 @@ The `intent` field declares how the consumer MUST integrate this stream into the
 
 ### 7.2 PROCESS — Running Operation
 
-Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
+Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` *n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
 
 | MSGID            | Required        | Optional                        |
 | ---------------- | --------------- | ------------------------------- |
@@ -264,7 +264,7 @@ Query flags produce data output and exit. Each response MUST be wrapped in `PAGE
 ```proto
 PAGE_BEGIN (room: current, title: command name, intent: "query")
 LIST_DECLARE (id: "help", ordered: false)
-LIST_APPEND ×n (value: help-item object — see schema below)
+LIST_APPEND *n (value: help-item object — see schema below)
 LIST_END
 PAGE_END
 ```
@@ -337,7 +337,7 @@ PAGE_END
 
 ```proto
 PAGE_BEGIN (room: current, title: context name)
-SCALAR_SET ×n
+SCALAR_SET *n
 PAGE_END
 ```
 
@@ -345,9 +345,9 @@ PAGE_END
 
 ```proto
 PAGE_BEGIN (room: current, title: context name)
-TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)
+TABLE_DECLARE → TABLE_ROW *n → TABLE_END   (items have named fields)
   OR
-LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)
+LIST_DECLARE → LIST_APPEND *n → LIST_END   (items are scalar)
 PAGE_END
 ```
 

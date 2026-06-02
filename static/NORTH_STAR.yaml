@@ -115,7 +115,7 @@ msgids:
         {
           required: false,
           type: string,
-          constraint: "GitHub gemoji code of form :name: — raw Unicode codepoints MUST NOT be used",
+          constraint: "GitHub gemoji code of form :name: — raw Unicode codepoints MUST NOT be used"
         }
       intent:
         required: false
@@ -145,13 +145,13 @@ msgids:
         {
           required: false,
           type: integer,
-          note: "Omit when unknown; consumer SHOULD render indeterminate indicator",
+          note: "Omit when unknown; consumer SHOULD render indeterminate indicator"
         }
       dry_run:
         {
           required: false,
           type: boolean,
-          constraint: "MUST be true on ALL PROCESS_* events when --dry-run is active",
+          constraint: "MUST be true on ALL PROCESS_* events when --dry-run is active"
         }
       recursive: { required: false, type: boolean }
 
@@ -219,7 +219,7 @@ msgids:
         {
           required: true,
           type: boolean,
-          semantics: "true → numbered; false → bullets",
+          semantics: "true → numbered; false → bullets"
         }
 
   LIST_APPEND:
@@ -351,7 +351,7 @@ flag_contracts:
         name:
           {
             type: string,
-            description: "Flag name (e.g. --path) or positional label (e.g. target)",
+            description: "Flag name (e.g. --path) or positional label (e.g. target)"
           }
         kind: { type: string, enum: [flag, positional] }
         type:
@@ -363,12 +363,12 @@ flag_contracts:
         short:
           {
             type: string,
-            note: "Single-char short flag (e.g. -p). Valid for kind=flag only.",
+            note: "Single-char short flag (e.g. -p). Valid for kind=flag only."
           }
         metavar:
           {
             type: string,
-            description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)",
+            description: "Placeholder in usage line (e.g. PATH, SNAPSHOT)"
           }
         required:
           type: boolean
@@ -423,7 +423,7 @@ flag_contracts:
         TABLE_ROW,
         TABLE_UPDATE,
         TABLE_END,
-        "any event with pri ≤ 4",
+        "any event with pri ≤ 4"
       ]
 
   verbose:
@@ -497,13 +497,13 @@ page_template:
         source_flag: --help,
         msgid_families: [LIST],
         list_id_constraint: "id=help",
-        gui: "buttons, command palette",
+        gui: "buttons, command palette"
       }
     activity:
       {
         source_flag: command,
         msgid_families: [PROCESS],
-        gui: "progress bar, spinner",
+        gui: "progress bar, spinner"
       }
 
   optional_slots:
