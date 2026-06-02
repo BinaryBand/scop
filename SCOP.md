@@ -65,14 +65,14 @@ SCOP is a composition, not a replacement:
 
 ### 4.1 POSIX.1 and GNU
 
-Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags; each flag's event contract is defined in §8.
+Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags with defined contracts; each flag's event contract is defined in §8. Flags marked † have no defined contract yet.
 
 | Flag          | Short | Category |
 | ------------- | ----- | -------- |
 | `--help`      | `-h`  | query    |
-| `--version`   | `-`   | query    |
+| `--version`   |       | query    |
 | `--list`      | `-l`  | query    |
-| `--status`    | `-`   | query    |
+| `--status`    |       | query    |
 | `--all`       | `-a`  | mode     |
 | `--quiet`     | `-q`  | mode     |
 | `--verbose`   | `-v`  | mode     |
@@ -152,7 +152,7 @@ All MSGIDs are grouped into families by data type. Consumers route events to GUI
 
 ### 7.1 PAGE — Page Frame
 
-Every stream MUST begin with `PAGE_BEGIN` and end with `PAGE_END`. `PAGE_END.msg` SHOULD be empty.
+Every stream MUST begin with `PAGE_BEGIN` and end with `PAGE_END`. `PAGE_END.msg` SHOULD be empty. If stdout closes or the process exits before `PAGE_END` is received, consumers MUST synthesize a terminal error state from any partial content already received — consumers MUST NOT remain in an indeterminate loading state (see §11).
 
 | MSGID        | Required        | Optional                     |
 | ------------ | --------------- | ---------------------------- |
@@ -199,7 +199,7 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 
 **Serialization of abstract types:**
 
-- `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the display denomination (e.g. bytes, KB, MB); formatting is consumer's responsibility; formatting is the consumer's responsibility.
+- `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the display denomination (e.g. `"bytes"`, `"KB"`, `"MB"`); formatting is the consumer's responsibility.
 - `duration` — `value` MUST be ISO 8601 duration string (e.g. PT1M30S). Raw integers MUST NOT be used — unit is ambiguous without the format.
 
 | MSGID          | Required                       | Optional               |
@@ -336,7 +336,7 @@ PAGE_END
 **`--status`**
 
 ```text
-PAGE_BEGIN (room: current, title: context name)
+PAGE_BEGIN (room: current, title: context name, intent: "query")
 SCALAR_SET ×n
 PAGE_END
 ```
@@ -344,14 +344,14 @@ PAGE_END
 **`--list` / `-l`**
 
 ```text
-PAGE_BEGIN (room: current, title: context name)
+PAGE_BEGIN (room: current, title: context name, intent: "query")
 TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)
   OR
 LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)
 PAGE_END
 ```
 
-> **Tiebreaker rule:** use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
+Use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
 
 ### 8.2 Mode Flags
 
@@ -387,13 +387,13 @@ ourapp [subcommand] --help     →  actions
 
 **Slot map:**
 
-| Slot        | Flag        | MSGID              | GUI rendering            |
-| ----------- | ----------- | ------------------ | ------------------------ |
-| Page chrome | any         | `PAGE_BEGIN`       | title, subtitle, icon    |
-| Stats       | `--status`  | `SCALAR_SET`       | stat cards               |
-| Content     | `--list`    | `TABLE` or `LIST`  | grid, list               |
-| Actions     | `--help`    | `LIST` (id="help") | buttons, command palette |
-| Activity    | any command | `PROCESS_*`        | progress, spinner        |
+| Slot        | Flag        | MSGID                 | GUI rendering            |
+| ----------- | ----------- | --------------------- | ------------------------ |
+| Page chrome | any         | `PAGE_BEGIN`          | title, subtitle, icon    |
+| Stats       | `--status`  | `SCALAR_SET`          | stat cards               |
+| Content     | `--list`    | `TABLE_*` or `LIST_*` | grid, list               |
+| Actions     | `--help`    | `LIST` (id="help")    | buttons, command palette |
+| Activity    | any command | `PROCESS_*`           | progress, spinner        |
 
 > **Routing note:** the `intent` field on `PAGE_BEGIN` — not the triggering flag — is the consumer's actual routing discriminant. `"query"` updates or replaces the page; `"action"` opens an activity overlay leaving all other slots intact. See §10 for the full routing table.
 
@@ -418,8 +418,8 @@ Each call is independent. A page MAY be built from a subset.
 {"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": "1.2MB", "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
 {"pri": 6, "msgid": "TABLE_END", "room": "snapshot", "id": "snaps", "msg": "1 snapshot"}
 {"pri": 6, "msgid": "LIST_DECLARE", "room": "snapshot", "id": "help", "label": "Commands", "ordered": false, "msg": "Commands"}
-{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "create", "value": {"command": "snapshot create", "description": "Take a new snapshot"}, "msg": "  create    Take a new snapshot"}
-{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "diff", "value": {"command": "snapshot diff", "description": "Compare two snapshots"}, "msg": "  diff      Compare two snapshots"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "create", "value": {"command": "snapshot create", "description": "Take a new snapshot", "kind": "action"}, "msg": "  create    Take a new snapshot"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "diff", "value": {"command": "snapshot diff", "description": "Compare two snapshots", "kind": "action"}, "msg": "  diff      Compare two snapshots"}
 {"pri": 6, "msgid": "LIST_END", "room": "snapshot", "id": "help", "msg": ""}
 {"pri": 6, "msgid": "PAGE_END", "room": "snapshot", "msg": ""}
 ```
@@ -459,7 +459,7 @@ A conforming consumer routes events using this table. No application knowledge i
 | `pri` 0–3                                            | error modal           | blocking                                                              |
 | `pri` 4                                              | warning banner        | non-blocking                                                          |
 | `pri` 5–6                                            | log area              | append                                                                |
-| `pri` 7                                              | suppressed            | unless `--verbose`                                                    |
+| `pri` 7                                              | suppressed            | suppressed by default (see §8.2)                                      |
 
 Unknown MSGIDs MUST be routed to the log area using `msg`. Unknown fields MUST be ignored.
 

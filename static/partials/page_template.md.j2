@@ -39,8 +39,8 @@ Each call is independent. A page MAY be built from a subset.
 {"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": "1.2MB", "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
 {"pri": 6, "msgid": "TABLE_END", "room": "snapshot", "id": "snaps", "msg": "1 snapshot"}
 {"pri": 6, "msgid": "LIST_DECLARE", "room": "snapshot", "id": "help", "label": "Commands", "ordered": false, "msg": "Commands"}
-{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "create", "value": {"command": "snapshot create", "description": "Take a new snapshot"}, "msg": "  create    Take a new snapshot"}
-{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "diff", "value": {"command": "snapshot diff", "description": "Compare two snapshots"}, "msg": "  diff      Compare two snapshots"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "create", "value": {"command": "snapshot create", "description": "Take a new snapshot", "kind": "action"}, "msg": "  create    Take a new snapshot"}
+{"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "diff", "value": {"command": "snapshot diff", "description": "Compare two snapshots", "kind": "action"}, "msg": "  diff      Compare two snapshots"}
 {"pri": 6, "msgid": "LIST_END", "room": "snapshot", "id": "help", "msg": ""}
 {"pri": 6, "msgid": "PAGE_END", "room": "snapshot", "msg": ""}
 ```

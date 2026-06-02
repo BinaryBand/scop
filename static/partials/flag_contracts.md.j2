@@ -85,7 +85,7 @@ PAGE_END
 **`--status`**
 
 ```text
-PAGE_BEGIN (room: current, title: context name)
+PAGE_BEGIN (room: current, title: context name, intent: "query")
 SCALAR_SET ×n
 PAGE_END
 ```
@@ -93,14 +93,14 @@ PAGE_END
 **`--list` / `-l`**
 
 ```text
-PAGE_BEGIN (room: current, title: context name)
+PAGE_BEGIN (room: current, title: context name, intent: "query")
 TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)
   OR
 LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)
 PAGE_END
 ```
 
-> **Tiebreaker rule:** use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
+Use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
 
 ### 8.2 Mode Flags
 

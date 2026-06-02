@@ -199,7 +199,7 @@ msgids:
       bytes:
         value_json_type: integer
         semantics: "absolute byte count"
-        unit_field: "display denomination (e.g. bytes, KB, MB); formatting is consumer's responsibility"
+        unit_field: 'display denomination (e.g. `"bytes"`, `"KB"`, `"MB"`)'  
       duration:
         value_format: "ISO 8601 duration string (e.g. PT1M30S)"
         constraint: "Raw integers MUST NOT be used — unit is ambiguous without the format"
@@ -500,7 +500,7 @@ page_template:
       gui: "grid, list"
       display: "Content"
       flag_md: '`--list`'
-      msgid_md: '`TABLE` or `LIST`'
+      msgid_md: '`TABLE_*` or `LIST_*`'
     actions:
       source_flag: --help
       msgid_families: [LIST]
@@ -581,7 +581,7 @@ consumer_routing:
       notes: "append"
     - condition: '`pri` 7'
       slot: "suppressed"
-      notes: "unless `--verbose`"
+      notes: "suppressed by default (see §8.2)"
     - condition: "unknown MSGID"
       prose: true
       notes: 'route to log area using `msg`'

@@ -22,7 +22,7 @@ All MSGIDs are grouped into families by data type. Consumers route events to GUI
 
 ### 7.1 PAGE — Page Frame
 
-Every stream MUST begin with `PAGE_BEGIN` and end with `PAGE_END`. `PAGE_END.msg` SHOULD be empty.
+Every stream MUST begin with `PAGE_BEGIN` and end with `PAGE_END`. `PAGE_END.msg` SHOULD be empty. If stdout closes or the process exits before `PAGE_END` is received, consumers MUST synthesize a terminal error state from any partial content already received — consumers MUST NOT remain in an indeterminate loading state (see §11).
 
 {{ field_table(['PAGE_BEGIN', 'PAGE_END']) }}
 
