@@ -28,7 +28,7 @@ event_base:
   required_fields:
     pri:
       type: integer
-      description: "RFC 5424 PRI — (facility × 8) + severity. SCOP uses facility 16."
+      description: "RFC 5424 PRI — (facility * 8) + severity. SCOP uses facility 16."
     msgid:
       type: string
       description: "SCOP event type (see msgids section)"
@@ -297,7 +297,7 @@ stream_protocol:
     - MUST: "Emit a well-formed empty page (PAGE_BEGIN + SCALAR_SET[id=page.empty] + PAGE_END) when a room has no data for --status or --list, rather than exiting with non-zero status"
     - MUST: "Consumer: if stdout closes or process exits before PAGE_END, synthesise a terminal error state using partial content — MUST NOT remain in indeterminate loading state"
   PROCESS_lifecycle:
-    sequence: [PROCESS_BEGIN, "PROCESS_UPDATE ×n", PROCESS_END]
+    sequence: [PROCESS_BEGIN, "PROCESS_UPDATE *n", PROCESS_END]
     PROCESS_LOG: "MAY be interspersed between BEGIN and END"
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -312,7 +312,7 @@ flag_contracts:
     sequence:
       - PAGE_BEGIN: { room: current, intent: query, title: command_name }
       - LIST_DECLARE: { id: help, ordered: false }
-      - LIST_APPEND: "×n  (value: help_item object — see help_item_schema)"
+      - LIST_APPEND: "*n  (value: help_item object — see help_item_schema)"
       - LIST_END
       - PAGE_END
 
@@ -388,7 +388,7 @@ flag_contracts:
     flags: [--status]
     sequence:
       - PAGE_BEGIN: { room: current, intent: query, title: context_name }
-      - SCALAR_SET: "×n"
+      - SCALAR_SET: "*n"
       - PAGE_END
     empty_room_rule: "see stream_protocol.rules"
 
@@ -396,9 +396,9 @@ flag_contracts:
     flags: [--list, -l]
     sequence:
       - PAGE_BEGIN: { room: current, intent: query, title: context_name }
-      - "TABLE_DECLARE → TABLE_ROW ×n → TABLE_END   (items have named fields)"
+      - "TABLE_DECLARE → TABLE_ROW *n → TABLE_END   (items have named fields)"
       - "  OR"
-      - "LIST_DECLARE → LIST_APPEND ×n → LIST_END   (items are scalar)"
+      - "LIST_DECLARE → LIST_APPEND *n → LIST_END   (items are scalar)"
       - PAGE_END
     empty_room_rule: "see stream_protocol.rules"
 
@@ -537,13 +537,13 @@ consumer_routing:
       action: "end of stream; slot update complete; page remains visible"
     - condition: "PAGE_END, intent=action"
       action: "close activity overlay"
-    - condition: "pri 0–3"
+    - condition: "pri 0-3"
       slot: error_modal
       blocking: true
     - condition: "pri 4"
       slot: warning_banner
       blocking: false
-    - condition: "pri 5–6"
+    - condition: "pri 5-6"
       slot: log_area
     - condition: "pri 7"
       action: "suppressed by default (see flag_contracts.verbose)"
