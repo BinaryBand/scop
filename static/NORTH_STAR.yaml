@@ -424,7 +424,7 @@ flag_contracts:
     include: "pri = 7 events"
     mutual_exclusion: "--quiet"
     precedence: "MUST take precedence over --quiet"
-    effect: 'MUST include `pri = 7` events'
+    effect: 'MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)'
 
   all:
     flags: [--all, -a]
@@ -508,7 +508,7 @@ page_template:
       gui: "buttons, command palette"
       display: "Actions"
       flag_md: '`--help`'
-      msgid_md: '`LIST` (id="help")'
+      msgid_md: '`LIST_*` (id="help")'
     activity:
       source_flag: command
       msgid_families: [PROCESS]
@@ -581,7 +581,7 @@ consumer_routing:
       notes: "append"
     - condition: '`pri` 7'
       slot: "suppressed"
-      notes: "suppressed by default (see §8.2)"
+      notes: "see §8.2"
     - condition: "unknown MSGID"
       prose: true
       notes: 'route to log area using `msg`'

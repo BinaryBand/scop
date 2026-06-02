@@ -99,7 +99,7 @@ Every SCOP event is a serialised RFC 5424 message.
 
 **Optional:** `ts` (ISO 8601 timestamp), `app` (application name), `pid` (process id).
 
-## Severity → GUI rendering
+#### Severity → GUI rendering
 
 | Severity | Value | Rendering                        |
 | -------- | ----- | -------------------------------- |
@@ -328,7 +328,7 @@ PAGE_END
 **`--version`**
 
 ```text
-PAGE_BEGIN (room: null, title: app name)
+PAGE_BEGIN (room: null, title: app name, intent: "query")
 SCALAR_SET (id: "version", type: "string", value: semver)
 PAGE_END
 ```
@@ -360,7 +360,7 @@ Mode flags adjust which events are emitted. They produce no events of their own.
 | Flag               | Effect                                                                                                                                                                                        |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--quiet` / `-q`   | MUST suppress `PROCESS_LOG` and `PROCESS_UPDATE`. MUST NOT suppress `PAGE_BEGIN`, `PAGE_END`, `PROCESS_BEGIN`, `PROCESS_END`, `SCALAR_SET`, `LIST_*`, `TABLE_*`, or any event with `pri ≤ 4`. |
-| `--verbose` / `-v` | MUST include `pri = 7` events                                                                                                                                                                 |
+| `--verbose` / `-v` | MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)                                                                                                                       |
 | `--all` / `-a`     | MUST expand scope of `LIST` and `TABLE` output                                                                                                                                                |
 
 ### 8.3 Process Modifier Flags
@@ -392,7 +392,7 @@ ourapp [subcommand] --help     →  actions
 | Page chrome | any         | `PAGE_BEGIN`          | title, subtitle, icon    |
 | Stats       | `--status`  | `SCALAR_SET`          | stat cards               |
 | Content     | `--list`    | `TABLE_*` or `LIST_*` | grid, list               |
-| Actions     | `--help`    | `LIST` (id="help")    | buttons, command palette |
+| Actions     | `--help`    | `LIST_*` (id="help")  | buttons, command palette |
 | Activity    | any command | `PROCESS_*`           | progress, spinner        |
 
 > **Routing note:** the `intent` field on `PAGE_BEGIN` — not the triggering flag — is the consumer's actual routing discriminant. `"query"` updates or replaces the page; `"action"` opens an activity overlay leaving all other slots intact. See §10 for the full routing table.
@@ -459,7 +459,7 @@ A conforming consumer routes events using this table. No application knowledge i
 | `pri` 0–3                                            | error modal           | blocking                                                              |
 | `pri` 4                                              | warning banner        | non-blocking                                                          |
 | `pri` 5–6                                            | log area              | append                                                                |
-| `pri` 7                                              | suppressed            | suppressed by default (see §8.2)                                      |
+| `pri` 7                                              | suppressed            | see §8.2                                                              |
 
 Unknown MSGIDs MUST be routed to the log area using `msg`. Unknown fields MUST be ignored.
 
