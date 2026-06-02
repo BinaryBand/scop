@@ -6,7 +6,7 @@ authors = [
     { name = "BinaryBand", email = "BinaryBand@users.noreply.github.com" },
 ]
 requires-python = ">=3.11"
-dependencies = ["jinja2 (>=3.1.6,<4.0.0)"]
+dependencies = ["jinja2 (>=3.1.6,<4.0.0)", "toml (>=0.10.2,<0.11.0)"]
 
 
 [build-system]

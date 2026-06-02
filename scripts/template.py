@@ -10,13 +10,30 @@ No template variables are provided (empty context) for this initial setup.
 """
 
 from pathlib import Path
+import toml
 import sys
 
-try:
-    from jinja2 import Environment, FileSystemLoader, select_autoescape
-except Exception as e:
-    print("Jinja2 is required. Install with: pip install Jinja2", file=sys.stderr)
-    raise
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+
+DEFAULT_VERSION = "0.1.0"
+
+
+def _get_version():
+    pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    if not pyproject_path.exists():
+        print(f"pyproject.toml not found: {pyproject_path}", file=sys.stderr)
+        return DEFAULT_VERSION
+
+    # Read the version from pyproject.toml
+    try:
+        pyproject_data = toml.load(pyproject_path)
+        version = pyproject_data.get("project", {}).get("version", DEFAULT_VERSION)
+        return version
+    except Exception as e:
+        print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
+        return DEFAULT_VERSION
+
 
 
 def render_templates():
@@ -44,8 +61,10 @@ def render_templates():
         out_name = tpl_path.name[:-3]  # strip .j2
         out_path = repo_root / out_name
 
+        version = _get_version()
+
         template = env.get_template(tpl_path.name)
-        rendered = template.render({})
+        rendered = template.render({"version": version})
 
         out_path.write_text(rendered, encoding='utf-8')
         written.append(out_path)
