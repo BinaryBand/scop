@@ -42,11 +42,6 @@ class RFC2119(BaseModel):
             return self.version_no + "-draft"
         return self.version_no
 
-    @computed_field
-    @property
-    def N(self) -> int:
-        return len(self.sections) + 3  # 3 = intro + terminology + design
-
 
 class RFC2119Section(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
