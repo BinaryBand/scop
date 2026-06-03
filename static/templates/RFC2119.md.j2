@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 {% set A = 3 %}
 {% set N = A + sections|length %}
-{% set C = N + 3 %}
+{% set C = N + 1 %}
 
 **Working Group:** {{ working_group }}
 **Document identifier:** {{ identifier }}
@@ -30,8 +30,11 @@ ABSTRACT TEXT.
 - [1. Introduction](#1-introduction)
 - [2. Terminology](#2-terminology)
 - [3. Design Principles](#3-design-principles)
-{% for f in sections %} - [{{ loop.index + 3 }}. {{ f.title }}](#{{ loop.index + 3 }}-{{ f.title | lower | replace(' ', '-') }})
-{% endfor %}
+{% for f in sections %}- [{{ loop.index + 3 }}. {{ f.title }}](#{{ loop.index + 3 }}-{{ f.title | lower | replace(' ', '-') }})
+{% endfor %}- [{{ C }}. Conformance](#{{ C }}-conformance)
+- [{{ C + 1 }}. Security Considerations](#{{ C + 1 }}-security-considerations)
+- [{{ C + 2 }}. IANA Considerations](#{{ C + 2 }}-iana-considerations)
+- [{{ C + 3 }}. References](#{{ C + 3 }}-references)
 
 ---
 
@@ -131,18 +134,3 @@ This document has no IANA actions.
 ### Informative References
 
 - **\[REFNAME\]** Author(s). "Title." URL or citation.
-
----
-
-## {{ C + 4 }}. Acknowledgements
-
-The authors would like to thank NAMES for their review and feedback.
-
----
-
-## {{ C + 5 }}. Author's Address
-
-**AUTHOR NAME**
-AFFILIATION (if any)
-Email: EMAIL
-URI: URL
