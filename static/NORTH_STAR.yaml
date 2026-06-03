@@ -365,8 +365,8 @@ flag_contracts:
           type: string
           default: string
           enum: [string, number, boolean, path, datetime, duration, bytes, choice]
-          note: "Types from SCOP-M §5; broader than the SCALAR_SET.type enum"
-          doc: 'One of the types defined in SCOP-M §5. Default: `"string"`'
+          note: "Broader than the SCALAR_SET.type wire-type enum"
+          doc: 'One of: `string`, `number`, `boolean`, `path`, `datetime`, `duration`, `bytes`, `choice`. Default: `"string"`'
         short:
           type: string
           note: "Single-char short flag (e.g. -p). Valid for kind=flag only."
@@ -641,15 +641,15 @@ security:
   - rule: "Consumers MUST NOT suppress dry_run=true annotations; users MUST be able to distinguish dry-run output from real output"
 
 # ────────────────────────────────────────────────────────────────────────────
-# CROSS-REFERENCE: SCOP vs SCOP-M TYPE SYSTEMS
-# The help-item param.type (§8.1) uses SCOP-M types (broader set).
+# TYPE SYSTEMS
+# The help-item param.type (§8.1) uses a broader set than SCALAR_SET.type.
 # SCALAR_SET.type uses the narrower wire-type set.
 # ────────────────────────────────────────────────────────────────────────────
 type_systems:
   scalar_set_wire_types: # SCOP §7.3 — SCALAR_SET.type enum
     enum: [number, string, boolean, duration, bytes]
 
-  param_types: # SCOP §8.1 / SCOP-M §5 — param.type enum
+  param_types: # SCOP §8.1 — param.type enum
     enum: [string, number, boolean, path, datetime, duration, bytes, choice]
     wire_type_mapping: # how manifest types serialise on the wire
       string: string

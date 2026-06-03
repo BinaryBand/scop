@@ -22,7 +22,7 @@ Draft specification, published for review and comment. The key words "MUST", "MU
 
 CLI applications lack a formal output standard. Every CLI-to-GUI bridge must be written per-application, duplicating effort and coupling tightly to application internals. SCOP addresses this by defining structured output that is CLI-first (`msg` always readable as plain text), standard-grounded (builds on POSIX, GNU, RFC 5424), and auto-translatable (a conforming renderer needs no app-specific code).
 
-SCOP defines a wire format, event vocabulary, room model, GNU flag contracts, and page template. It does not define GUI rendering details, transport beyond stdout, authentication, or application business logic. The companion specification **SCOP-M** defines a declarative manifest format (`scop.toml`) for statically describing a SCOP application's rooms, commands, and input types.
+SCOP defines a wire format, event vocabulary, room model, GNU flag contracts, and page template. It does not define GUI rendering details, transport beyond stdout, authentication, or application business logic.
 
 SCOP is a composition, not a replacement:
 
@@ -281,16 +281,16 @@ PAGE_END
 
 **Param object** (each element of `params`):
 
-| Field         | Type    | Required | Description                                                       |
-| ------------- | ------- | -------- | ----------------------------------------------------------------- |
-| `name`        | string  | ✓        | Flag name (e.g. `"--path"`) or positional label (e.g. `"target"`) |
-| `kind`        | string  | ✓        | `"flag"` or `"positional"`                                        |
-| `type`        | string  |          | One of the types defined in SCOP-M §5. Default: `"string"`        |
-| `short`       | string  |          | Short alias (e.g. `"-p"`). Valid for `kind = "flag"` only         |
-| `metavar`     | string  |          | Placeholder in usage line (e.g. `"PATH"`, `"SNAPSHOT"`)           |
-| `required`    | boolean |          | Default: `true` for positionals, `false` for flags                |
-| `repeatable`  | boolean |          | Whether the param may appear multiple times. Default: `false`     |
-| `description` | string  |          | Human-readable description                                        |
+| Field         | Type    | Required | Description                                                                                                   |
+| ------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `name`        | string  | ✓        | Flag name (e.g. `"--path"`) or positional label (e.g. `"target"`)                                             |
+| `kind`        | string  | ✓        | `"flag"` or `"positional"`                                                                                    |
+| `type`        | string  |          | One of: `string`, `number`, `boolean`, `path`, `datetime`, `duration`, `bytes`, `choice`. Default: `"string"` |
+| `short`       | string  |          | Short alias (e.g. `"-p"`). Valid for `kind = "flag"` only                                                     |
+| `metavar`     | string  |          | Placeholder in usage line (e.g. `"PATH"`, `"SNAPSHOT"`)                                                       |
+| `required`    | boolean |          | Default: `true` for positionals, `false` for flags                                                            |
+| `repeatable`  | boolean |          | Whether the param may appear multiple times. Default: `false`                                                 |
+| `description` | string  |          | Human-readable description                                                                                    |
 
 **Ordering within `params`:** positionals MUST precede flags. Among flags, required flags MUST precede optional. Within each group, alphabetical by `name`.
 
@@ -469,8 +469,6 @@ Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. 
 
 ---
 
-## 11. Conformance
-
 **Producer MUST:** emit NDJSON to stdout; include `pri`, `msgid`, `room`, `msg` in every event; ensure `msg` is a complete human-readable line; wrap every stream in `PAGE_BEGIN` / `PAGE_END`; derive `room` from the subcommand path (§6); use only MSGIDs defined in §7; implement `--help`, `--version`, `--status`, and `--list` per §8.1; emit a well-formed empty page (`PAGE_BEGIN` + `SCALAR_SET` with `id="page.empty"` + `PAGE_END`) when a room has no data for `--status` or `--list`, rather than exiting with a non-zero status; encode all output as UTF-8.
 
 **Producer SHOULD:** implement `--quiet`, `--verbose` (§8.2); implement `--dry-run` (§8.3); include `intent` on every `PAGE_BEGIN` — `"query"` for discovery flag streams (`--help`, `--status`, `--list`), `"action"` for command execution streams; design rooms such that `--status` and `--list` are invocable without positional arguments; NOT encode runtime entity identifiers in their room path; entity context is a runtime parameter, not a room identifier.
@@ -505,7 +503,6 @@ Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. 
 
 ### Informative
 
-- **SCOP-M v0.1.2-draft** — SCOP Manifest Format (companion specification)
 - **LSP `$/progress`** — Language Server Protocol §3.16.1. Microsoft (2021).
 - **Adaptive Cards** — adaptivecards.io
 - **CloudEvents** — CNCF CloudEvents v1.0.2. cloudevents.io
