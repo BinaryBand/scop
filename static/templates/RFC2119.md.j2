@@ -1,7 +1,6 @@
 <!-- markdownlint-disable MD041 -->
 {% set A = 3 %}
-{% set N = A + sections|length %}
-{% set C = N + 1 %}
+{% set C = sections|length + A + 1 %}
 
 **Working Group:** {{ working_group }}
 **Document identifier:** {{ identifier }}
@@ -30,7 +29,7 @@ ABSTRACT TEXT.
 - [1. Introduction](#1-introduction)
 - [2. Terminology](#2-terminology)
 - [3. Design Principles](#3-design-principles)
-{% for f in sections %}- [{{ loop.index + 3 }}. {{ f.title }}](#{{ loop.index + 3 }}-{{ f.title | lower | replace(' ', '-') }})
+{% for f in sections %}- [{{ loop.index + A }}. {{ f.title }}](#{{ loop.index + A }}-{{ f.title | lower | replace(' ', '-') }})
 {% endfor %}- [{{ C }}. Conformance](#{{ C }}-conformance)
 - [{{ C + 1 }}. Security Considerations](#{{ C + 1 }}-security-considerations)
 - [{{ C + 2 }}. IANA Considerations](#{{ C + 2 }}-iana-considerations)
@@ -63,9 +62,16 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 ---
 
 {% for f in sections %}
-## {{ loop.index + 3 }}. {{ f.title }}
+## {{ loop.index + A }}. {{ f.title }}
 
-Placeholder text for section {{ loop.index + 3 }}.
+{% for g in f.subsections %}
+### {{ g.title }}
+
+{% for h in g.subsections %}
+#### {{ h.title }}
+{% endfor %}
+
+{% endfor %}
 
 ---
 {% endfor %}

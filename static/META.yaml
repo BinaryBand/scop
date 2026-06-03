@@ -1,0 +1,28 @@
+title: "Structured CLI Output Protocol (SCOP)"
+working_group: "Independent"
+shortname: SCOP
+version_no: "0.2.0"
+status: "Draft"
+
+sections:
+  - title: "Foundation Standards"
+    subsections:
+      [
+        { title: "POSIX.1 and GNU" },
+        {
+          title: "RFC 5424 Fields",
+          subsections: [{ title: "Severity → GUI rendering" }]
+        }
+      ]
+
+  - title: "Wire Format"
+
+  - title: "Room Model"
+
+  - title: "Event Vocabulary"
+
+  - title: "GNU Flag Contract"
+
+  - title: "Page Template"
+
+  - title: "Auto-Translation Rules"

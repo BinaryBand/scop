@@ -71,26 +71,10 @@ class RFC2119Section(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     title: str
+    subsections: list[RFC2119Section] = []
 
 
 # --- testing ---
-
-_MODEL = RFC2119(
-    title="Structured CLI Output Protocol (SCOP)",
-    working_group="Independent",
-    shortname="SCOP",
-    version_no="0.1.2",
-    status="Draft",
-    sections=[
-        RFC2119Section(title="Foundation Standards"),
-        RFC2119Section(title="Wire Format"),
-        RFC2119Section(title="Room Model"),
-        RFC2119Section(title="Event Vocabulary"),
-        RFC2119Section(title="GNU Flag Contract"),
-        RFC2119Section(title="Page Template"),
-        RFC2119Section(title="Auto-Translation Rules"),
-    ],
-)
 
 
 def main() -> int:
@@ -105,6 +89,10 @@ def main() -> int:
 
     tpl_name = "RFC2119.md.j2"
     out_path = repo_root / tpl_name[: -len(".j2")]
+
+    meta_path = repo_root / "static" / "META.yaml"
+    raw: Any = yaml.safe_load(meta_path.read_text(encoding="utf-8"))
+    _MODEL = RFC2119.model_validate(raw)
 
     north_star_path = repo_root / "static" / "NORTH_STAR.yaml"
     if north_star_path.exists():
