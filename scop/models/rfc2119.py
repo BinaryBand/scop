@@ -28,6 +28,16 @@ class RFC2119(BaseModel):
     version_no: _Version
     status: _Category
     license: str = "CC0 1.0 Universal (Public Domain)"
+
+    principles: dict[str, str] = {
+        "CLI first": "`msg` MUST always be a complete, human-readable line",
+        "Standard-grounded": "SCOP MUST NOT conflict with POSIX or GNU; it defers to them",
+        "Data-typed": "MSGIDs name the data type, not the display form",
+        "Rooms derived": "Room is always derived from the command path — never declared",
+        "Zero app knowledge": "A consumer MUST build any page from the stream alone",
+        "Additive": "Consumers MUST ignore unknown MSGIDs and fields",
+    }
+
     sections: list[RFC2119Section] = []
 
     @computed_field

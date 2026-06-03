@@ -51,11 +51,10 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 
 ## 3. Design Principles
 
-| Principle   | Rule                  |
-| ----------- | --------------------- |
-| Principle A | MUST rule statement   |
-| Principle B | SHOULD rule statement |
-| Principle C | Descriptive statement |
+| Principle | Rule |
+| --------- | ---- |
+{% for p, r in principles.items() %}| {{ p }} | {{ r }} |
+{% endfor %}
 
 ---
 
