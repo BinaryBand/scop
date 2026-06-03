@@ -154,6 +154,7 @@ msgids:
           constraint: "MUST be true on ALL PROCESS_* events when --dry-run is active"
         }
       recursive: { required: false, type: boolean }
+      force: { required: false, type: boolean }
 
   PROCESS_UPDATE:
     family: PROCESS
@@ -162,6 +163,9 @@ msgids:
       current: { required: true, type: integer }
       total: { required: false, type: integer }
       label: { required: false, type: string }
+      dry_run: { required: false, type: boolean }
+      recursive: { required: false, type: boolean }
+      force: { required: false, type: boolean }
 
   PROCESS_END:
     family: PROCESS
@@ -169,6 +173,8 @@ msgids:
       id: { required: true, type: string }
       ok: { required: true, type: boolean }
       dry_run: { required: false, type: boolean }
+      recursive: { required: false, type: boolean }
+      force: { required: false, type: boolean }
 
   PROCESS_LOG:
     family: PROCESS

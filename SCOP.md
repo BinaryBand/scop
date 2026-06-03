@@ -176,12 +176,12 @@ The `intent` field declares how the consumer MUST integrate this stream into the
 
 Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
 
-| MSGID            | Required        | Optional                        |
-| ---------------- | --------------- | ------------------------------- |
-| `PROCESS_BEGIN`  | `id`, `label`   | `total`, `dry_run`, `recursive` |
-| `PROCESS_UPDATE` | `id`, `current` | `total`, `label`                |
-| `PROCESS_END`    | `id`, `ok`      | `dry_run`                       |
-| `PROCESS_LOG`    | `id`            |                                 |
+| MSGID            | Required        | Optional                                          |
+| ---------------- | --------------- | ------------------------------------------------- |
+| `PROCESS_BEGIN`  | `id`, `label`   | `total`, `dry_run`, `recursive`, `force`          |
+| `PROCESS_UPDATE` | `id`, `current` | `total`, `label`, `dry_run`, `recursive`, `force` |
+| `PROCESS_END`    | `id`, `ok`      | `dry_run`, `recursive`, `force`                   |
+| `PROCESS_LOG`    | `id`            |                                                   |
 
 `PROCESS_LOG` carries its payload in `msg` only — no separate `message` field. `msg` is already globally required and serves as the log line directly.
 
