@@ -27,14 +27,8 @@ ABSTRACT TEXT.
 - [1\. Introduction](#1-introduction)
 - [2\. Terminology](#2-terminology)
 - [3\. Design Principles](#3-design-principles)
-- [4\. SECTION TITLE](#4-section-title)
-- [5\. SECTION TITLE](#5-section-title)
-- [N. Conformance](#n-conformance)
-- [N+1. Security Considerations](#n1-security-considerations)
-- [N+2. IANA Considerations](#n2-iana-considerations)
-- [N+3. References](#n3-references)
-- [N+4. Acknowledgements](#n4-acknowledgements)
-- [N+5. Author's Address](#n5-authors-address)
+{% for f in sections %}
+- [{{ loop.index + 3 }}. {{ f.title }}](#{{ f.title | lower | replace(' ', '-') }}){% endfor %}
 
 ---
 
@@ -42,9 +36,7 @@ ABSTRACT TEXT.
 
 INTRODUCTION TEXT.
 
-This document defines WHAT-IT-DEFINES. It does not define
-GUI-RENDERING-DETAILS, TRANSPORT, AUTHENTICATION, or
-APPLICATION-BUSINESS-LOGIC.
+This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS, TRANSPORT, AUTHENTICATION, or APPLICATION-BUSINESS-LOGIC.
 
 ---
 
