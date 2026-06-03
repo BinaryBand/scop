@@ -22,10 +22,14 @@
       }
     ]
   },
+  "scripts": {
+    "markdownlint": "npx markdownlint-cli2 --config package.json --configPointer /markdownlint-cli2/config \"**/*.md\""
+  },
   "markdownlint-cli2": {
     "config": {
       "default": true,
       "MD013": false,
+      "MD033": false,
       "MD024": {
         "siblings_only": true
       },
