@@ -145,14 +145,10 @@ def render_templates():
     except Exception:
         flags_table = ""
 
-    pattern = "*.j2"
+    pattern = "SCOP*.md.j2"
     written = []
 
     for tpl_path in templates_dir.glob(pattern):
-        # Only process files that look like markdown templates (*.md.j2)
-        if not tpl_path.name.endswith(".j2"):
-            continue
-
         out_name = tpl_path.name[:-3]  # strip .j2
         out_path = repo_root / out_name
 
