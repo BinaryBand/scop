@@ -29,6 +29,17 @@ class RFC2119(BaseModel):
     status: _Category
     license: str = "CC0 1.0 Universal (Public Domain)"
 
+    terms: dict[str, str] = {
+        "Producer": "a SCOP-conforming CLI application that emits events.",
+        "Consumer": "software that reads a SCOP event stream and renders it.",
+        "Event": "a single NDJSON line emitted by a producer.",
+        "Stream": "the ordered sequence of events from one command invocation.",
+        "MSGID": "a string identifier classifying an event by its data type (§7).",
+        "Room": "a page context derived from the subcommand path (§6).",
+        "Page": "a GUI display unit corresponding to one room, assembled from one or more streams.",
+        "Slot": "a named region in a page layout; events are routed to slots by MSGID family.",
+    }
+
     principles: dict[str, str] = {
         "CLI first": "`msg` MUST always be a complete, human-readable line",
         "Standard-grounded": "SCOP MUST NOT conflict with POSIX or GNU; it defers to them",

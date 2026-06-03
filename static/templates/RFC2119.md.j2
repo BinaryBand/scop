@@ -4,7 +4,7 @@
 {% set C = N + 3 %}
 
 **Working Group:** {{ working_group }}
-**Document identifier:** `{{ identifier }}`
+**Document identifier:** {{ identifier }}
 **Version:** VERSION {{ version }}
 **Status:** {{ status }}
 **License:** {{ license }}
@@ -45,7 +45,8 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 
 ## 2. Terminology
 
-<dl><dt>**Term A**</dt><dd>Definition. Introduced in §SECTION.</dd><dt>**Term B**</dt><dd>Definition.</dd><dt>**Term C**</dt><dd>Definition.</dd></dl>
+{% for t, d in terms.items() %} - **{{ t }}** - {{ d }}
+{% endfor %}
 
 ---
 
