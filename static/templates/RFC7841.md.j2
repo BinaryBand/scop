@@ -2,23 +2,39 @@
 {% set A = 3 %}
 {% set C = sections|length + A + 1 %}
 
-**Working Group:** {{ working_group }}
+{{ stream }}
+**Author:** {{ author }}{% if author_affiliation %} ({{ author_affiliation }}){% endif %}
 **Document identifier:** {{ identifier }}
-**Version:** {{ version }}
-**Status:** {{ status }}
+**Category:** {{ category }}
+**ISSN:** {{ issn }}
+**Date:** {{ date }}
 **License:** {{ license }}
 
 ---
 
 # {{ title }}
 
-## Status of This Document
-
-Draft specification, published for review and comment. The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", "MAY", and "OPTIONAL" are interpreted as described in RFC 2119.
-
 ## Abstract
 
 {{ abstract }}
+
+---
+
+## Status of This Memo
+
+This document is not an Internet Standards Track specification; it is published for informational purposes.
+
+This is a contribution to the RFC Series, independently of any other RFC stream. The RFC Editor has chosen to publish this document at its discretion and makes no statement about its value for implementation or deployment. Documents approved for publication by the RFC Editor are not a candidate for any level of Internet Standard; see [Section 2 of RFC 7841](https://www.rfc-editor.org/info/rfc7841/#2-rfc-streams-and-internet-standards).
+
+Information about the current status of this document and how to provide feedback may be obtained at <https://github.com/shaneafsar/scop>.
+
+---
+
+## Copyright Notice
+
+Copyright (c) 2026 {{ author }}. All rights reserved.
+
+This document is made available under {{ license }}.
 
 ---
 
@@ -49,6 +65,8 @@ SCOP is a composition, not a replacement:
 | Envelope | RFC 5424 | event fields, severity |
 | Serialisation | NDJSON | wire format |
 | Output | SCOP | vocabulary + page model |
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
 
 ---
 
@@ -129,18 +147,25 @@ This document has no IANA actions.
 
 ## {{ C + 3 }}. References
 
-### Normative
+### Normative References
 
-- **RFC 2119** — Key words for use in RFCs. Bradner, S. (1997).
-- **RFC 5424** — The Syslog Protocol. Gerhards, R. (2009).
-- **IEEE Std 1003.1-2024** — POSIX.1-2024, Issue 8.
-- **GNU Coding Standards** — gnu.org/prep/standards
-- **NDJSON** — ndjson.org
+- **\[RFC2119\]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, March 1997. <https://www.rfc-editor.org/info/rfc2119>
+- **\[RFC5424\]** Gerhards, R., "The Syslog Protocol", RFC 5424, March 2009. <https://www.rfc-editor.org/info/rfc5424>
+- **\[POSIX\]** IEEE, "IEEE Std 1003.1-2024 (POSIX.1-2024)", Issue 8, 2024. <https://pubs.opengroup.org/onlinepubs/9799919799/>
+- **\[GNU\]** Free Software Foundation, "GNU Coding Standards". <https://www.gnu.org/prep/standards>
+- **\[NDJSON\]** "Newline Delimited JSON". <https://ndjson.org>
 
-### Informative
+### Informative References
 
-- **LSP `$/progress`** — Language Server Protocol §3.16.1. Microsoft (2021).
-- **Adaptive Cards** — adaptivecards.io
-- **CloudEvents** — CNCF CloudEvents v1.0.2. cloudevents.io
-- **TLDP Standard Options** — tldp.org/LDP/abs/html/standard-options.html
-- **GitHub gemoji** — github.com/github/gemoji (icon field encoding standard)
+- **\[LSP\]** Microsoft, "Language Server Protocol Specification §3.16.1 $/progress", 2021. <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>
+- **\[AdaptiveCards\]** Microsoft, "Adaptive Cards". <https://adaptivecards.io>
+- **\[CloudEvents\]** CNCF, "CloudEvents Specification v1.0.2". <https://cloudevents.io>
+- **\[TLDP\]** "Advanced Bash-Scripting Guide — Standard Option Flags", The Linux Documentation Project. <https://tldp.org/LDP/abs/html/standard-options.html>
+- **\[gemoji\]** GitHub, "gemoji — GitHub emoji". <https://github.com/github/gemoji>
+
+---
+
+## Author's Address
+
+**{{ author }}**{% if author_affiliation %}
+{{ author_affiliation }}{% endif %}

@@ -35,12 +35,20 @@ class RFC7841(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     title: str
-    working_group: str
     shortname: _Shortname
     version_no: _Version
     status: _Category
     abstract: str = ""
     license: str = "CC0 1.0 Universal (Public Domain)"
+
+    # RFC 7841 metadata
+    working_group: str = "Independent Submission"
+    author: str = ""
+    author_affiliation: str = ""
+    category: str = "Informational"
+    stream: str = "Independent Submission"
+    date: str = ""
+    issn: str = "2070-1721"
 
     north_star: Any = {}
 
