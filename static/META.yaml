@@ -12,7 +12,6 @@ sections:
       - title: "POSIX.1 and GNU"
         body: |
           Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags with defined contracts; each flag's event contract is defined in §8. Flags marked † have no defined contract yet.
-        partial: "partials/flags.md.j2"
 
       - title: "RFC 5424 Fields"
         body: |

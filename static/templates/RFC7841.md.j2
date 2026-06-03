@@ -4,7 +4,7 @@
 
 **Working Group:** {{ working_group }}
 **Document identifier:** {{ identifier }}
-**Version:** VERSION {{ version }}
+**Version:** {{ version }}
 **Status:** {{ status }}
 **License:** {{ license }}
 
@@ -19,8 +19,6 @@ Draft specification, published for review and comment. The key words "MUST", "MU
 ## Abstract
 
 {{ abstract }}
-
-> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
 
 ---
 
@@ -81,6 +79,10 @@ SCOP is a composition, not a replacement:
 ### {{ g.title }}
 
 {{ g.body }}
+{% if g.title == "POSIX.1 and GNU" %}
+{{ flags_table }}
+
+{% endif %}
 {% if g.partial %}
 {% include g.partial %}
 {% else %}

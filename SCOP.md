@@ -237,7 +237,7 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 
 `schema` MUST be an ordered array of column names. `values` MUST be a JSON object keyed by column name. `display_hint` is OPTIONAL and advisory (`"table"`, `"chart"`, `"cards"`); consumers MAY ignore it.
 
-`column_types` is OPTIONAL. When present, keys MUST be a subset of schema column names; values MUST be members of scalar_set_wire_types. Consumers that do not need type information MUST ignore it per the unknown-fields rule.
+`column_types` is OPTIONAL. When present, keys MUST be a subset of schema column names; values MUST be one of the scalar types from §7.3: `number`, `string`, `boolean`, `duration`, `bytes`. Consumers that do not need type information MUST ignore it per the unknown-fields rule.
 
 | MSGID           | Required                 | Optional                       |
 | --------------- | ------------------------ | ------------------------------ |
@@ -416,8 +416,8 @@ Each call is independent. A page MAY be built from a subset.
 {"pri": 6, "msgid": "PAGE_BEGIN", "room": "snapshot", "title": "Snapshots", "subtitle": "Manage and compare snapshots", "icon": ":camera_with_flash:", "intent": "query", "msg": "=== Snapshots ==="}
 {"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "tracked", "label": "Tracked files", "value": 1042, "type": "number", "msg": "Tracked files: 1042"}
 {"pri": 6, "msgid": "SCALAR_SET", "room": "snapshot", "id": "last_snap", "label": "Last snapshot", "value": "2026-05-30T14:32:00Z", "type": "string", "msg": "Last snapshot: 2026-05-30T14:32:00Z"}
-{"pri": 6, "msgid": "TABLE_DECLARE", "room": "snapshot", "id": "snaps", "label": "Snapshots", "schema": ["name", "files", "size", "date"], "msg": "Snapshots"}
-{"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": "1.2MB", "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
+{"pri": 6, "msgid": "TABLE_DECLARE", "room": "snapshot", "id": "snaps", "label": "Snapshots", "schema": ["name", "files", "size", "date"], "column_types": {"files": "number", "size": "bytes", "date": "string"}, "msg": "Snapshots"}
+{"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": 1258291, "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
 {"pri": 6, "msgid": "TABLE_END", "room": "snapshot", "id": "snaps", "msg": "1 snapshot"}
 {"pri": 6, "msgid": "LIST_DECLARE", "room": "snapshot", "id": "help", "label": "Commands", "ordered": false, "msg": "Commands"}
 {"pri": 6, "msgid": "LIST_APPEND", "room": "snapshot", "id": "help", "item_id": "create", "value": {"command": "snapshot create", "description": "Take a new snapshot", "kind": "action"}, "msg": "  create    Take a new snapshot"}

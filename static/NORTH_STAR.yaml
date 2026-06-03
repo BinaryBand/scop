@@ -267,7 +267,7 @@ msgids:
       column_types:
         required: false
         type: object
-        constraint: "keys MUST be a subset of schema column names; values MUST be members of scalar_set_wire_types"
+        constraint: "keys MUST be a subset of schema column names; values MUST be one of the scalar types from §7.3: `number`, `string`, `boolean`, `duration`, `bytes`"
 
   TABLE_ROW:
     family: TABLE

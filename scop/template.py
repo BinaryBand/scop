@@ -18,6 +18,39 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 DEFAULT_VERSION = "0.1.0"
 
 
+def _build_flags_table(ns: dict) -> str:
+    """Build flags table markdown from NORTH_STAR.yaml::flag_contracts."""
+    try:
+        fc = ns.get("flag_contracts", {}) or {}
+        all_flags = fc.get("all_flags", []) or []
+        lines = []
+        lines.append("| Flag | Short | Category |")
+        lines.append("| --- | --- | --- |")
+        pending_exists = False
+        for f in all_flags:
+            long = f.get("long") if isinstance(f, dict) else str(f)
+            short = f.get("short") if isinstance(f, dict) else None
+            short_display = f"`{short}`" if short else ""
+            category = f.get("category", "") if isinstance(f, dict) else ""
+            is_pending = (
+                isinstance(f, dict)
+                and f.get("status")
+                and "pending" in str(f.get("status"))
+            )
+            marker = " †" if is_pending else ""
+            if is_pending:
+                pending_exists = True
+            lines.append(f"| `{long}` | {short_display} | {category}{marker} |")
+        flags_table = "\n".join(lines)
+        if pending_exists:
+            flags_table = (
+                flags_table + "\n\n*† Contract not yet defined; see pending additions.*"
+            )
+        return flags_table
+    except Exception:
+        return ""
+
+
 def _build_severity_rows(ns: dict) -> list[dict]:
     """Extract severity rows from NORTH_STAR.yaml for template context."""
     severity_rows = []
@@ -118,37 +151,7 @@ def render_templates():
             print(f"Error reading NORTH_STAR.yaml: {e}", file=sys.stderr)
 
     severity_rows = _build_severity_rows(ns)
-
-    # Build flags table markdown from NORTH_STAR.yaml::flag_contracts
-    flags_table = ""
-    try:
-        fc = ns.get("flag_contracts", {}) or {}
-        all_flags = fc.get("all_flags", []) or []
-        lines = []
-        lines.append("| Flag | Short | Category |")
-        lines.append("| --- | --- | --- |")
-        pending_exists = False
-        for f in all_flags:
-            long = f.get("long") if isinstance(f, dict) else str(f)
-            short = f.get("short") if isinstance(f, dict) else None
-            short_display = f"`{short}`" if short else ""
-            category = f.get("category", "") if isinstance(f, dict) else ""
-            is_pending = (
-                isinstance(f, dict)
-                and f.get("status")
-                and "pending" in str(f.get("status"))
-            )
-            marker = " †" if is_pending else ""
-            if is_pending:
-                pending_exists = True
-            lines.append(f"| `{long}` | {short_display} | {category}{marker} |")
-        flags_table = "\n".join(lines)
-        if pending_exists:
-            flags_table = (
-                flags_table + "\n\n*† Contract not yet defined; see pending additions.*"
-            )
-    except Exception:
-        flags_table = ""
+    flags_table = _build_flags_table(ns)
 
     pattern = "SCOP*.md.j2"
     written = []

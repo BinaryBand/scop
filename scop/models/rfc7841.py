@@ -15,7 +15,7 @@ from pydantic import (
     computed_field,
 )
 
-from scop.template import _build_severity_rows
+from scop.template import _build_flags_table, _build_severity_rows
 
 _Category = Literal["Draft", "Proposed Standard", "Standard"]
 _Shortname = Annotated[str, Field(pattern=r"^[A-Z0-9]+$")]
@@ -108,6 +108,7 @@ def main() -> int:
     context = {
         **model.model_dump(),
         "severity_rows": _build_severity_rows(model.north_star),
+        "flags_table": _build_flags_table(model.north_star),
     }
     rendered = template.render(context)
 
