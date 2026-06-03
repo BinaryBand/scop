@@ -68,6 +68,7 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 {%- set ser = msgids.SCALAR_SET.type_serialization_rules %}
 - `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the {{ ser.bytes.unit_field }}; formatting is the consumer's responsibility.
 - `duration` — `value` MUST be {{ ser.duration.value_format }}. {{ ser.duration.constraint }}.
+- `string` — Producers SHOULD use ISO 8601 format for datetime values carried as `string` type (e.g. `"2026-05-30T14:32:00Z"`).
 
 {{ field_table(['SCALAR_SET', 'SCALAR_CLEAR']) }}
 
@@ -99,7 +100,7 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 {%- set tct = msgids.TABLE_DECLARE.fields.column_types %}
 `schema` MUST be an ordered array of column names. `values` MUST be a JSON object keyed by column name. `display_hint` is OPTIONAL and advisory (`"{{ tdh.enum | join('"`, `"') }}"`); consumers MAY ignore it.
 
-`column_types` is OPTIONAL. When present, {{ tct.constraint }}. Consumers that do not need type information MUST ignore it per the unknown-fields rule.
+`column_types` is OPTIONAL. When present, {{ tct.constraint }}. Consumers that do not need type information MUST ignore it per the unknown-fields rule. When `column_types` is present, `TABLE_ROW.values` for declared columns MUST be serialised using the same JSON primitive rules as `SCALAR_SET` values of the corresponding type (§7.3).
 
 {{ field_table(['TABLE_DECLARE', 'TABLE_ROW', 'TABLE_UPDATE', 'TABLE_END']) }}
 

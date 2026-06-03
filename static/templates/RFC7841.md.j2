@@ -87,14 +87,16 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 ---
 
 {% for f in sections %}
+{% set section_no = loop.index + A %}
 {% if f.partial %}
 {% include f.partial %}
 {% else %}
-## {{ loop.index + A }}. {{ f.title }}
+## {{ section_no }}. {{ f.title }}
 
 {{ f.body }}
 {% for g in f.subsections %}
-### {{ g.title }}
+{% set subsection_no = section_no ~ '.' ~ loop.index %}
+### {{ subsection_no }} {{ g.title }}
 
 {{ g.body }}
 {% if g.title == "POSIX.1 and GNU" %}
@@ -105,11 +107,11 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 {% include g.partial %}
 {% else %}
 {% for h in g.subsections %}
+#### {{ subsection_no }}.{{ loop.index }} {{ h.title }}
+
 {% if h.partial %}
 {% include h.partial %}
 {% else %}
-#### {{ h.title }}
-
 {{ h.body }}
 {% endif %}
 {% endfor %}

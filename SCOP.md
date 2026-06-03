@@ -200,6 +200,7 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 
 - `bytes` — `value` MUST be a JSON integer representing the absolute byte count (e.g. `12582912`). The `unit` field SHOULD carry the display denomination (e.g. `"bytes"`, `"KB"`, `"MB"`); formatting is the consumer's responsibility.
 - `duration` — `value` MUST be ISO 8601 duration string (e.g. PT1M30S). Raw integers MUST NOT be used — unit is ambiguous without the format.
+- `string` — Producers SHOULD use ISO 8601 format for datetime values carried as `string` type (e.g. `"2026-05-30T14:32:00Z"`).
 
 | MSGID          | Required                       | Optional               |
 | -------------- | ------------------------------ | ---------------------- |
@@ -237,7 +238,7 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 
 `schema` MUST be an ordered array of column names. `values` MUST be a JSON object keyed by column name. `display_hint` is OPTIONAL and advisory (`"table"`, `"chart"`, `"cards"`); consumers MAY ignore it.
 
-`column_types` is OPTIONAL. When present, keys MUST be a subset of schema column names; values MUST be one of the scalar types from §7.3: `number`, `string`, `boolean`, `duration`, `bytes`. Consumers that do not need type information MUST ignore it per the unknown-fields rule.
+`column_types` is OPTIONAL. When present, keys MUST be a subset of schema column names; values MUST be one of the scalar types from §7.3: `number`, `string`, `boolean`, `duration`, `bytes`. Consumers that do not need type information MUST ignore it per the unknown-fields rule. When `column_types` is present, `TABLE_ROW.values` for declared columns MUST be serialised using the same JSON primitive rules as `SCALAR_SET` values of the corresponding type (§7.3).
 
 | MSGID           | Required                 | Optional                       |
 | --------------- | ------------------------ | ------------------------------ |
