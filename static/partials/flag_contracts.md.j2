@@ -102,13 +102,15 @@ PAGE_END
 
 Use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
 
+{{ fc.list.scope_convention }}
+
 ### 8.2 Mode Flags
 
 Mode flags adjust which events are emitted. They produce no events of their own. `--quiet` and `--verbose` are mutually exclusive; `--verbose` MUST take precedence.
 
 | Flag | Effect |
 | --- | --- |
-{%- for key in ['quiet', 'verbose', 'all'] %}
+{%- for key in ['quiet', 'verbose'] %}
 {%- set mf = fc[key] %}
 {%- set flags_display = '`' + mf.flags[0] + '` / `' + mf.flags[1] + '`' if mf.flags | length > 1 else '`' + mf.flags[0] + '`' %}
 | {{ flags_display }} | {{ mf.effect }} |

@@ -73,7 +73,6 @@ Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): s
 | `--version`   |       | query    |
 | `--list`      | `-l`  | query    |
 | `--status`    |       | query    |
-| `--all`       | `-a`  | mode     |
 | `--quiet`     | `-q`  | mode     |
 | `--verbose`   | `-v`  | mode     |
 | `--dry-run`   | `-n`  | modifier |
@@ -238,16 +237,18 @@ Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `tot
 
 `schema` MUST be an ordered array of column names. `values` MUST be a JSON object keyed by column name. `display_hint` is OPTIONAL and advisory (`"table"`, `"chart"`, `"cards"`); consumers MAY ignore it.
 
-| MSGID           | Required                 | Optional       |
-| --------------- | ------------------------ | -------------- |
-| `TABLE_DECLARE` | `id`, `label`, `schema`  | `display_hint` |
-| `TABLE_ROW`     | `id`, `row_id`, `values` |                |
-| `TABLE_UPDATE`  | `id`, `row_id`, `values` |                |
-| `TABLE_END`     | `id`                     |                |
+`column_types` is OPTIONAL. When present, keys MUST be a subset of schema column names; values MUST be members of scalar_set_wire_types. Consumers that do not need type information MUST ignore it per the unknown-fields rule.
+
+| MSGID           | Required                 | Optional                       |
+| --------------- | ------------------------ | ------------------------------ |
+| `TABLE_DECLARE` | `id`, `label`, `schema`  | `display_hint`, `column_types` |
+| `TABLE_ROW`     | `id`, `row_id`, `values` |                                |
+| `TABLE_UPDATE`  | `id`, `row_id`, `values` |                                |
+| `TABLE_END`     | `id`                     |                                |
 
 ```json
-{"pri": 6, "msgid": "TABLE_DECLARE", "room": "snapshot", "id": "snaps", "label": "Snapshots", "schema": ["name", "files", "size", "date"], "msg": "Snapshots"}
-{"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": "1.2MB", "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
+{"pri": 6, "msgid": "TABLE_DECLARE", "room": "snapshot", "id": "snaps", "label": "Snapshots", "schema": ["name", "files", "size", "date"], "column_types": {"files": "number", "size": "bytes", "date": "string"}, "msg": "Snapshots"}
+{"pri": 6, "msgid": "TABLE_ROW", "room": "snapshot", "id": "snaps", "row_id": "s1", "values": {"name": "snap-001", "files": 42, "size": 1258291, "date": "2026-05-30"}, "msg": "snap-001  42 files  1.2MB  2026-05-30"}
 {"pri": 6, "msgid": "TABLE_END", "room": "snapshot", "id": "snaps", "msg": "1 snapshot"}
 ```
 
@@ -353,6 +354,8 @@ PAGE_END
 
 Use `TABLE` when items have two or more named fields (i.e. the producer would naturally model them as a struct or dict row); use `LIST` when items are scalars or single-value strings. When in doubt, `TABLE` with a single-column schema is valid.
 
+A bare `--list` invocation (no arguments) MUST return the default scope. Scope-expanding arguments MAY be defined by the producer and MUST be described via `params` in the `--help` response for that room.
+
 ### 8.2 Mode Flags
 
 Mode flags adjust which events are emitted. They produce no events of their own. `--quiet` and `--verbose` are mutually exclusive; `--verbose` MUST take precedence.
@@ -361,7 +364,6 @@ Mode flags adjust which events are emitted. They produce no events of their own.
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--quiet` / `-q`   | MUST suppress `PROCESS_LOG` and `PROCESS_UPDATE`. MUST NOT suppress `PAGE_BEGIN`, `PAGE_END`, `PROCESS_BEGIN`, `PROCESS_END`, `SCALAR_SET`, `LIST_*`, `TABLE_*`, or any event with `pri ≤ 4`. |
 | `--verbose` / `-v` | MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)                                                                                                                       |
-| `--all` / `-a`     | MUST expand scope of `LIST` and `TABLE` output                                                                                                                                                |
 
 ### 8.3 Process Modifier Flags
 

@@ -264,6 +264,10 @@ msgids:
         type: string
         enum: [table, chart, cards]
         advisory: true # consumers MAY ignore
+      column_types:
+        required: false
+        type: object
+        constraint: "keys MUST be a subset of schema column names; values MUST be members of scalar_set_wire_types"
 
   TABLE_ROW:
     family: TABLE
@@ -408,6 +412,7 @@ flag_contracts:
       - "LIST_DECLARE → LIST_APPEND *n → LIST_END   (items are scalar)"
       - PAGE_END
     empty_room_rule: "see stream_protocol.rules"
+    scope_convention: "A bare `--list` invocation (no arguments) MUST return the default scope. Scope-expanding arguments MAY be defined by the producer and MUST be described via `params` in the `--help` response for that room."
 
   # ── Mode flags — adjust which events are emitted; produce no events ──────
 
@@ -425,10 +430,6 @@ flag_contracts:
     mutual_exclusion: "--quiet"
     precedence: "MUST take precedence over --quiet"
     effect: 'MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)'
-
-  all:
-    flags: [--all, -a]
-    effect: 'MUST expand scope of `LIST` and `TABLE` output'
 
   # ── Modifier flags — annotate PROCESS_* events; no new MSGIDs ───────────
 
@@ -462,7 +463,6 @@ flag_contracts:
     - { long: --version, short: null, category: query }
     - { long: --list, short: -l, category: query }
     - { long: --status, short: null, category: query }
-    - { long: --all, short: -a, category: mode }
     - { long: --quiet, short: -q, category: mode }
     - { long: --verbose, short: -v, category: mode }
     - { long: --dry-run, short: -n, category: modifier }
