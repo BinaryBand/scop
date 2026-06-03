@@ -199,7 +199,7 @@ msgids:
       bytes:
         value_json_type: integer
         semantics: "absolute byte count"
-        unit_field: 'display denomination (e.g. `"bytes"`, `"KB"`, `"MB"`)'  
+        unit_field: 'display denomination (e.g. `"bytes"`, `"KB"`, `"MB"`)'
       duration:
         value_format: "ISO 8601 duration string (e.g. PT1M30S)"
         constraint: "Raw integers MUST NOT be used — unit is ambiguous without the format"
@@ -364,7 +364,8 @@ flag_contracts:
         type:
           type: string
           default: string
-          enum: [string, number, boolean, path, datetime, duration, bytes, choice]
+          enum:
+            [string, number, boolean, path, datetime, duration, bytes, choice]
           note: "Broader than the SCALAR_SET.type wire-type enum"
           doc: 'One of: `string`, `number`, `boolean`, `path`, `datetime`, `duration`, `bytes`, `choice`. Default: `"string"`'
         short:
@@ -379,11 +380,11 @@ flag_contracts:
           type: boolean
           default_for_positional: true
           default_for_flag: false
-          doc: 'Default: `true` for positionals, `false` for flags'
+          doc: "Default: `true` for positionals, `false` for flags"
         repeatable:
           type: boolean
           default: false
-          doc: 'Whether the param may appear multiple times. Default: `false`'
+          doc: "Whether the param may appear multiple times. Default: `false`"
         description:
           type: string
           doc: "Human-readable description"
@@ -420,16 +421,24 @@ flag_contracts:
     flags: [--quiet, -q]
     suppress: [PROCESS_LOG, PROCESS_UPDATE]
     never_suppress:
-      [PAGE_BEGIN, PAGE_END, PROCESS_BEGIN, PROCESS_END, SCALAR_SET,
-       LIST_*, TABLE_*, "any event with pri ≤ 4"]
-    effect: 'MUST suppress `PROCESS_LOG` and `PROCESS_UPDATE`. MUST NOT suppress `PAGE_BEGIN`, `PAGE_END`, `PROCESS_BEGIN`, `PROCESS_END`, `SCALAR_SET`, `LIST_*`, `TABLE_*`, or any event with `pri ≤ 4`.'
+      [
+        PAGE_BEGIN,
+        PAGE_END,
+        PROCESS_BEGIN,
+        PROCESS_END,
+        SCALAR_SET,
+        LIST_*,
+        TABLE_*,
+        "any event with pri ≤ 4"
+      ]
+    effect: "MUST suppress `PROCESS_LOG` and `PROCESS_UPDATE`. MUST NOT suppress `PAGE_BEGIN`, `PAGE_END`, `PROCESS_BEGIN`, `PROCESS_END`, `SCALAR_SET`, `LIST_*`, `TABLE_*`, or any event with `pri ≤ 4`."
 
   verbose:
     flags: [--verbose, -v]
     include: "pri = 7 events"
     mutual_exclusion: "--quiet"
     precedence: "MUST take precedence over --quiet"
-    effect: 'MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)'
+    effect: "MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)"
 
   # ── Modifier flags — annotate PROCESS_* events; no new MSGIDs ───────────
 
@@ -486,28 +495,28 @@ page_template:
       gui: "title, subtitle, icon"
       display: "Page chrome"
       flag_md: "any"
-      msgid_md: '`PAGE_BEGIN`'
+      msgid_md: "`PAGE_BEGIN`"
     stats:
       source_flag: --status
       msgid_families: [SCALAR]
       gui: "stat cards"
       display: "Stats"
-      flag_md: '`--status`'
-      msgid_md: '`SCALAR_SET`'
+      flag_md: "`--status`"
+      msgid_md: "`SCALAR_SET`"
     content:
       source_flag: --list
       msgid_families: [TABLE, LIST]
       gui: "grid, list"
       display: "Content"
-      flag_md: '`--list`'
-      msgid_md: '`TABLE_*` or `LIST_*`'
+      flag_md: "`--list`"
+      msgid_md: "`TABLE_*` or `LIST_*`"
     actions:
       source_flag: --help
       msgid_families: [LIST]
       list_id_constraint: "id=help"
       gui: "buttons, command palette"
       display: "Actions"
-      flag_md: '`--help`'
+      flag_md: "`--help`"
       msgid_md: '`LIST_*` (id="help")'
     activity:
       source_flag: command
@@ -515,7 +524,7 @@ page_template:
       gui: "progress, spinner"
       display: "Activity"
       flag_md: "any command"
-      msgid_md: '`PROCESS_*`'
+      msgid_md: "`PROCESS_*`"
 
   optional_slots:
     description:
@@ -549,19 +558,19 @@ consumer_routing:
     - condition: '`PAGE_BEGIN` where `intent: "action"`'
       slot: "open activity overlay"
       notes: "activity slot only; all other slots unchanged"
-    - condition: '`SCALAR_SET`'
+    - condition: "`SCALAR_SET`"
       slot: "stats area"
       notes: "stat card"
-    - condition: '`TABLE_*`'
+    - condition: "`TABLE_*`"
       slot: "content area"
       notes: "table, grid, or chart"
     - condition: '`LIST_*` where `id="help"`'
       slot: "actions area"
       notes: "buttons or command palette"
-    - condition: '`LIST_*` otherwise'
+    - condition: "`LIST_*` otherwise"
       slot: "content area"
       notes: "list"
-    - condition: '`PROCESS_*`'
+    - condition: "`PROCESS_*`"
       slot: "activity indicator"
       notes: "progress bar or spinner"
     - condition: '`PAGE_END` where `intent: "query"`'
@@ -570,21 +579,21 @@ consumer_routing:
     - condition: '`PAGE_END` where `intent: "action"`'
       slot: "end of stream"
       notes: "close activity overlay"
-    - condition: '`pri` 0–3'
+    - condition: "`pri` 0–3"
       slot: "error modal"
       notes: "blocking"
-    - condition: '`pri` 4'
+    - condition: "`pri` 4"
       slot: "warning banner"
       notes: "non-blocking"
-    - condition: '`pri` 5–6'
+    - condition: "`pri` 5–6"
       slot: "log area"
       notes: "append"
-    - condition: '`pri` 7'
+    - condition: "`pri` 7"
       slot: "suppressed"
       notes: "see §8.2"
     - condition: "unknown MSGID"
       prose: true
-      notes: 'route to log area using `msg`'
+      notes: "route to log area using `msg`"
     - condition: "unknown field"
       prose: true
       notes: "ignore without error"
@@ -606,13 +615,13 @@ conformance:
     - "derive `room` from the subcommand path (§6)"
     - "use only MSGIDs defined in §7"
     - "implement `--help`, `--version`, `--status`, and `--list` per §8.1"
-    - "emit a well-formed empty page (`PAGE_BEGIN` + `SCALAR_SET` with `id=\"page.empty\"` + `PAGE_END`) when a room has no data for `--status` or `--list`, rather than exiting with a non-zero status"
+    - 'emit a well-formed empty page (`PAGE_BEGIN` + `SCALAR_SET` with `id="page.empty"` + `PAGE_END`) when a room has no data for `--status` or `--list`, rather than exiting with a non-zero status'
     - "encode all output as UTF-8"
 
   producer_SHOULD:
     - "implement `--quiet`, `--verbose` (§8.2)"
     - "implement `--dry-run` (§8.3)"
-    - "include `intent` on every `PAGE_BEGIN` — `\"query\"` for discovery flag streams (`--help`, `--status`, `--list`), `\"action\"` for command execution streams"
+    - 'include `intent` on every `PAGE_BEGIN` — `"query"` for discovery flag streams (`--help`, `--status`, `--list`), `"action"` for command execution streams'
     - "design rooms such that `--status` and `--list` are invocable without positional arguments"
     - "NOT encode runtime entity identifiers in their room path; entity context is a runtime parameter, not a room identifier"
 

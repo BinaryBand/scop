@@ -15,6 +15,8 @@ from pydantic import (
     computed_field,
 )
 
+from scop.template import _build_severity_rows
+
 _Category = Literal["Draft", "Proposed Standard", "Standard"]
 _Shortname = Annotated[str, Field(pattern=r"^[A-Z0-9]+$")]
 _Version = Annotated[str, Field(pattern=r"^\d+(\.\d+)*$")]
@@ -24,6 +26,8 @@ class RFC7841Section(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     title: str
+    body: str = ""
+    partial: str = ""
     subsections: list[RFC7841Section] = []
 
 
@@ -35,6 +39,7 @@ class RFC7841(BaseModel):
     shortname: _Shortname
     version_no: _Version
     status: _Category
+    abstract: str = ""
     license: str = "CC0 1.0 Universal (Public Domain)"
 
     north_star: Any = {}
@@ -100,7 +105,11 @@ def main() -> int:
         model.north_star = ns
 
     template = env.get_template(tpl_name)
-    rendered = template.render(model.model_dump())
+    context = {
+        **model.model_dump(),
+        "severity_rows": _build_severity_rows(model.north_star),
+    }
+    rendered = template.render(context)
 
     out_path.write_text(rendered, encoding="utf-8")
     print(f"Wrote: {out_path}")

@@ -3,26 +3,70 @@ working_group: "Independent"
 shortname: SCOP
 version_no: "0.2.0"
 status: "Draft"
+abstract: |
+  SCOP defines a machine-readable output format for CLI applications that is simultaneously human-readable as plain text and automatically translatable to graphical user interfaces. It composes three existing standards — POSIX.1 Utility Conventions, GNU Coding Standards, and RFC 5424 — adding a typed event vocabulary, a room-based page model, and a three-flag protocol that together enable any conforming CLI application to be rendered as a GUI without application-specific code.
 
 sections:
   - title: "Foundation Standards"
     subsections:
-      [
-        { title: "POSIX.1 and GNU" },
-        {
-          title: "RFC 5424 Fields",
-          subsections: [{ title: "Severity → GUI rendering" }]
-        }
-      ]
+      - title: "POSIX.1 and GNU"
+        body: |
+          Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags with defined contracts; each flag's event contract is defined in §8. Flags marked † have no defined contract yet.
+        partial: "partials/flags.md.j2"
+
+      - title: "RFC 5424 Fields"
+        body: |
+          Every SCOP event is a serialised RFC 5424 message.
+
+          **Required:**
+
+          | Field | Key | Description |
+          | --- | --- | --- |
+          | PRI | `pri` | Facility (16) + severity, encoded as integer |
+          | MSGID | `msgid` | SCOP event type (§7) |
+          | MSG | `msg` | Complete, human-readable line |
+
+          **Optional:** `ts` (ISO 8601 timestamp), `app` (application name), `pid` (process id).
+        subsections:
+          - title: "Severity → GUI rendering"
+            partial: "partials/severity.md.j2"
 
   - title: "Wire Format"
+    body: |
+      Events are serialised as **NDJSON** — one complete JSON object per line, separated by `\n`. Each line MUST be independently parseable. Producers MUST write to stdout. Producers MUST encode all output as **UTF-8**.
+
+      Every event MUST contain `pri`, `msgid`, `room`, and `msg`. The `msg` field MUST be a complete standalone readable line — it MUST NOT require other fields to be meaningful, and MUST NOT verbatim duplicate them.
+
+      ```json
+      {"pri": 6, "msgid": "PROCESS_BEGIN", "room": "snapshot", "id": "snap", "label": "Snapshotting ./docs", "total": 142, "msg": "Snapshotting ./docs (142 files)"}
+      {"pri": 6, "msgid": "PROCESS_UPDATE", "room": "snapshot", "id": "snap", "current": 71, "total": 142, "msg": "71 of 142: README.md"}
+      {"pri": 6, "msgid": "PROCESS_END", "room": "snapshot", "id": "snap", "ok": true, "msg": "Snapshot complete"}
+      ```
 
   - title: "Room Model"
+    body: |
+      A **room** is derived mechanically from the subcommand path — it is never declared explicitly.
+
+      **Derivation rule:** `room = subcommand tokens joined by "/"`, excluding all flag tokens (`-f`, `--flag`) and all positional operand values. Only the structural subcommand path tokens are included — not the runtime values passed to those subcommands. Root room = `null`.
+
+      | Invocation | Room |
+      | --- | --- |
+      | `ourapp` | `null` |
+      | `ourapp snapshot` | `"snapshot"` |
+      | `ourapp snapshot diff` | `"snapshot/diff"` |
+      | `ourapp snapshot --list` | `"snapshot"` |
+      | `ourapp snapshot diff snap-001 snap-002` | `"snapshot/diff"` |
+
+      The last example shows that positional operand values (`snap-001`, `snap-002`) are excluded. Room strings MUST be stable across versions. Changing a room string is a breaking change.
 
   - title: "Event Vocabulary"
+    partial: "partials/msgids.md.j2"
 
   - title: "GNU Flag Contract"
+    partial: "partials/flag_contracts.md.j2"
 
   - title: "Page Template"
+    partial: "partials/page_template.md.j2"
 
   - title: "Auto-Translation Rules"
+    partial: "partials/consumer_routing.md.j2"

@@ -18,7 +18,7 @@ Draft specification, published for review and comment. The key words "MUST", "MU
 
 ## Abstract
 
-ABSTRACT TEXT.
+{{ abstract }}
 
 > The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
 
@@ -39,9 +39,18 @@ ABSTRACT TEXT.
 
 ## 1. Introduction
 
-INTRODUCTION TEXT.
+CLI applications lack a formal output standard. Every CLI-to-GUI bridge must be written per-application, duplicating effort and coupling tightly to application internals. SCOP addresses this by defining structured output that is CLI-first (`msg` always readable as plain text), standard-grounded (builds on POSIX, GNU, RFC 5424), and auto-translatable (a conforming renderer needs no app-specific code).
 
-This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS, TRANSPORT, AUTHENTICATION, or APPLICATION-BUSINESS-LOGIC.
+SCOP defines a wire format, event vocabulary, room model, GNU flag contracts, and page template. It does not define GUI rendering details, transport beyond stdout, authentication, or application business logic.
+
+SCOP is a composition, not a replacement:
+
+| Layer | Standard | Role |
+| --- | --- | --- |
+| Input | POSIX.1 Ch.12 + GNU | flags, subcommands |
+| Envelope | RFC 5424 | event fields, severity |
+| Serialisation | NDJSON | wire format |
+| Output | SCOP | vocabulary + page model |
 
 ---
 
@@ -62,16 +71,32 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 ---
 
 {% for f in sections %}
+{% if f.partial %}
+{% include f.partial %}
+{% else %}
 ## {{ loop.index + A }}. {{ f.title }}
 
+{{ f.body }}
 {% for g in f.subsections %}
 ### {{ g.title }}
 
+{{ g.body }}
+{% if g.partial %}
+{% include g.partial %}
+{% else %}
 {% for h in g.subsections %}
+{% if h.partial %}
+{% include h.partial %}
+{% else %}
 #### {{ h.title }}
+
+{{ h.body }}
+{% endif %}
 {% endfor %}
+{% endif %}
 
 {% endfor %}
+{% endif %}
 
 ---
 {% endfor %}
@@ -84,19 +109,13 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 
 ## {{ C + 1 }}. Security Considerations
 
-### Injection
+**Injection.** String values are untrusted. Consumers MUST sanitise before rendering in HTML or injection-sensitive contexts.
 
-PROSE. Implementations MUST sanitise untrusted input before use in
-injection-sensitive contexts.
+**Denial of service.** Producers MAY emit unbounded events. Consumers SHOULD implement stream size limits.
 
-### Denial of Service
+**Sensitive data.** Producers MUST NOT include secrets, credentials, or PII in events.
 
-PROSE. Consumers SHOULD implement resource limits.
-
-### Sensitive Data
-
-PROSE. Producers MUST NOT include secrets, credentials, or PII in
-ARTEFACT-NAME.
+**Dry run.** Consumers MUST NOT suppress `dry_run: true` annotations. Users MUST be able to distinguish dry-run output from real output.
 
 ---
 
@@ -108,11 +127,18 @@ This document has no IANA actions.
 
 ## {{ C + 3 }}. References
 
-### Normative References
+### Normative
 
-- **\[RFC2119\]** Bradner, S. "Key words for use in RFCs to Indicate Requirement Levels." RFC 2119, March 1997. https://www.rfc-editor.org/rfc/rfc2119
-- **\[REFNAME\]** Author(s). "Title." Standard body and number, Date. URL.
+- **RFC 2119** — Key words for use in RFCs. Bradner, S. (1997).
+- **RFC 5424** — The Syslog Protocol. Gerhards, R. (2009).
+- **IEEE Std 1003.1-2024** — POSIX.1-2024, Issue 8.
+- **GNU Coding Standards** — gnu.org/prep/standards
+- **NDJSON** — ndjson.org
 
-### Informative References
+### Informative
 
-- **\[REFNAME\]** Author(s). "Title." URL or citation.
+- **LSP `$/progress`** — Language Server Protocol §3.16.1. Microsoft (2021).
+- **Adaptive Cards** — adaptivecards.io
+- **CloudEvents** — CNCF CloudEvents v1.0.2. cloudevents.io
+- **TLDP Standard Options** — tldp.org/LDP/abs/html/standard-options.html
+- **GitHub gemoji** — github.com/github/gemoji (icon field encoding standard)
