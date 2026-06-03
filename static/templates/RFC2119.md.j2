@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD041 -->
+{% set C = N + 3 %}
 
 **Working Group:** {{ working_group }}
 **Document identifier:** `{{ identifier }}`
@@ -24,15 +25,15 @@ ABSTRACT TEXT.
 
 ## Table of Contents
 
-- [1\. Introduction](#1-introduction)
-- [2\. Terminology](#2-terminology)
-- [3\. Design Principles](#3-design-principles)
-{% for f in sections %}
-- [{{ loop.index + 3 }}. {{ f.title }}](#{{ f.title | lower | replace(' ', '-') }}){% endfor %}
+- [1. Introduction](#1-introduction)
+- [2. Terminology](#2-terminology)
+- [3. Design Principles](#3-design-principles)
+{% for f in sections %} - [{{ loop.index + 3 }}. {{ f.title }}](#{{ loop.index + 3 }}-{{ f.title | lower | replace(' ', '-') }})
+{% endfor %}
 
 ---
 
-## 1\. Introduction
+## 1. Introduction
 
 INTRODUCTION TEXT.
 
@@ -40,13 +41,13 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 
 ---
 
-## 2\. Terminology
+## 2. Terminology
 
 <dl><dt>**Term A**</dt><dd>Definition. Introduced in §SECTION.</dd><dt>**Term B**</dt><dd>Definition.</dd><dt>**Term C**</dt><dd>Definition.</dd></dl>
 
 ---
 
-## 3\. Design Principles
+## 3. Design Principles
 
 | Principle   | Rule                  |
 | ----------- | --------------------- |
@@ -56,30 +57,17 @@ This document defines WHAT-IT-DEFINES. It does not define GUI-RENDERING-DETAILS,
 
 ---
 
-## 4\. SECTION TITLE
+{% for f in sections %}
+## {{ loop.index + 3 }}. {{ f.title }}
 
-### 4.1 Sub-section Title
-
-Sub-section prose. Implementations MUST satisfy the following:
-
-- Requirement one.
-- Requirement two.
-
-### 4.2 Sub-section Title
-
-PROSE.
+Placeholder text for section {{ loop.index + 3 }}.
 
 ---
+{% endfor %}
 
-## 5\. SECTION TITLE
+## {{ C }}. Conformance
 
-PROSE.
-
----
-
-## N. Conformance
-
-### N.1 ACTOR-A (e.g. Producer) Requirements
+### {{ C }}.1 ACTOR-A (e.g. Producer) Requirements
 
 **MUST:**
 
@@ -94,7 +82,7 @@ PROSE.
 
 - Permission.
 
-### N.2 ACTOR-B (e.g. Consumer) Requirements
+### {{ C }}.2 ACTOR-B (e.g. Consumer) Requirements
 
 **MUST:**
 
@@ -107,7 +95,7 @@ PROSE.
 
 ---
 
-## N+1. Security Considerations
+## {{ C + 1 }}. Security Considerations
 
 ### Injection
 
@@ -125,13 +113,13 @@ ARTEFACT-NAME.
 
 ---
 
-## N+2. IANA Considerations
+## {{ C + 2 }}. IANA Considerations
 
 This document has no IANA actions.
 
 ---
 
-## N+3. References
+## {{ C + 3 }}. References
 
 ### Normative References
 
@@ -144,13 +132,13 @@ This document has no IANA actions.
 
 ---
 
-## N+4. Acknowledgements
+## {{ C + 4 }}. Acknowledgements
 
 The authors would like to thank NAMES for their review and feedback.
 
 ---
 
-## N+5. Author's Address
+## {{ C + 5 }}. Author's Address
 
 **AUTHOR NAME**
 AFFILIATION (if any)
