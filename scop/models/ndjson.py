@@ -158,7 +158,7 @@ class NDJSONEvent(BaseModel):
     )
 
     # Core Required Fields (§4.2 & §5)
-    pri: Pri = Field(..., description="RFC 5424 PRI — facility*8 + severity")
+    pri: Pri = Field(..., description="Severity level (0–7)")
     msgid: MSGID = Field(..., description="SCOP message identifier")
     room: OptText = Field(..., description="Derived room path or null")
     msg: SingleLineText = Field(..., description="Human-readable single-line message")
@@ -231,10 +231,8 @@ class NDJSONEvent(BaseModel):
             raise TypeError("pri must be an integer, not a boolean")
         if not isinstance(v, int):
             raise TypeError("pri must be an integer")
-        # SCOP uses facility 16 per spec — enforce facility bits (facility = pri // 8)
-        facility = v // 8
-        if facility != 16:
-            raise ValueError("pri facility must be 16 for SCOP events")
+        if not 0 <= v <= 7:
+            raise ValueError("pri must be a severity value in 0–7")
         return v
 
     @model_validator(mode="after")

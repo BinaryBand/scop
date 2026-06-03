@@ -28,7 +28,7 @@ event_base:
   required_fields:
     pri:
       type: integer
-      description: "RFC 5424 PRI — (facility * 8) + severity. SCOP uses facility 16."
+      description: "Severity level (0–7). SCOP encodes pri as severity only; facility is not used."
     msgid:
       type: string
       description: "SCOP event type (see msgids section)"
@@ -444,7 +444,7 @@ flag_contracts:
     include: "pri = 7 events"
     mutual_exclusion: "--quiet"
     precedence: "MUST take precedence over --quiet"
-    effect: "MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)"
+    effect: "MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2.1)"
 
   # ── Modifier flags — annotate PROCESS_* events; no new MSGIDs ───────────
 
@@ -636,7 +636,7 @@ conformance:
     - "route events per §10 using the `intent` field on `PAGE_BEGIN`"
     - "render `msg` as fallback for unknown MSGIDs"
     - "ignore unknown MSGIDs and fields without error"
-    - "map RFC 5424 severity per §4.2"
+    - "map RFC 5424 severity per §4.2.1"
     - "synthesize a terminal error state using any partial content received if stdout closes or the process exits before `PAGE_END` — MUST NOT remain in an indeterminate loading state"
     - "NOT suppress `dry_run: true` annotations"
     - "sanitize string values before rendering in HTML or injection-sensitive contexts"

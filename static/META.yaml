@@ -30,7 +30,7 @@ sections:
 
           | Field | Key | Description |
           | --- | --- | --- |
-          | PRI | `pri` | Facility (16) + severity, encoded as integer |
+          | PRI | `pri` | Severity level (0–7), encoded as integer |
           | MSGID | `msgid` | SCOP event type (§7) |
           | MSG | `msg` | Complete, human-readable line |
 

@@ -364,7 +364,7 @@ Mode flags adjust which events are emitted. They produce no events of their own.
 | Flag               | Effect                                                                                                                                                                                        |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--quiet` / `-q`   | MUST suppress `PROCESS_LOG` and `PROCESS_UPDATE`. MUST NOT suppress `PAGE_BEGIN`, `PAGE_END`, `PROCESS_BEGIN`, `PROCESS_END`, `SCALAR_SET`, `LIST_*`, `TABLE_*`, or any event with `pri ≤ 4`. |
-| `--verbose` / `-v` | MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2)                                                                                                                       |
+| `--verbose` / `-v` | MUST include `pri = 7` (DEBUG) events (suppressed by default; see §4.2.1)                                                                                                                     |
 
 ### 8.3 Process Modifier Flags
 
@@ -474,7 +474,7 @@ Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. 
 
 **Producer SHOULD:** implement `--quiet`, `--verbose` (§8.2); implement `--dry-run` (§8.3); include `intent` on every `PAGE_BEGIN` — `"query"` for discovery flag streams (`--help`, `--status`, `--list`), `"action"` for command execution streams; design rooms such that `--status` and `--list` are invocable without positional arguments; NOT encode runtime entity identifiers in their room path; entity context is a runtime parameter, not a room identifier.
 
-**Consumer MUST:** parse NDJSON line-by-line; route events per §10 using the `intent` field on `PAGE_BEGIN`; render `msg` as fallback for unknown MSGIDs; ignore unknown MSGIDs and fields without error; map RFC 5424 severity per §4.2; synthesize a terminal error state using any partial content received if stdout closes or the process exits before `PAGE_END` — MUST NOT remain in an indeterminate loading state; NOT suppress `dry_run: true` annotations; sanitize string values before rendering in HTML or injection-sensitive contexts.
+**Consumer MUST:** parse NDJSON line-by-line; route events per §10 using the `intent` field on `PAGE_BEGIN`; render `msg` as fallback for unknown MSGIDs; ignore unknown MSGIDs and fields without error; map RFC 5424 severity per §4.2.1; synthesize a terminal error state using any partial content received if stdout closes or the process exits before `PAGE_END` — MUST NOT remain in an indeterminate loading state; NOT suppress `dry_run: true` annotations; sanitize string values before rendering in HTML or injection-sensitive contexts.
 
 **Consumer SHOULD:** implement the three-flag protocol (§9); support optional slots (§9); implement stream size limits.
 
