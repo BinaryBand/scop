@@ -4,8 +4,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
+import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import (
     BaseModel,
@@ -28,6 +29,8 @@ class RFC2119(BaseModel):
     version_no: _Version
     status: _Category
     license: str = "CC0 1.0 Universal (Public Domain)"
+
+    north_star: Any = {}
 
     terms: dict[str, str] = {
         "Producer": "a SCOP-conforming CLI application that emits events.",
@@ -102,6 +105,11 @@ def main() -> int:
 
     tpl_name = "RFC2119.md.j2"
     out_path = repo_root / tpl_name[: -len(".j2")]
+
+    north_star_path = repo_root / "static" / "NORTH_STAR.yaml"
+    if north_star_path.exists():
+        ns = yaml.safe_load(north_star_path.read_text(encoding="utf-8"))
+        _MODEL.north_star = ns
 
     template = env.get_template(tpl_name)
     rendered = template.render(_MODEL.model_dump())
