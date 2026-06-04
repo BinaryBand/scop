@@ -9,10 +9,10 @@ from typing import Any
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from scop.models.common.base import BaseRFC, RFCSection
+from scop.rfc.base import BaseRFC, RFCSection
 from scop.template import _build_flags_table, _build_severity_rows
 
-# Backward-compatibility alias for existing imports (e.g. rfc2119.py)
+# Backward-compatibility alias for existing imports
 RFC7841Section = RFCSection
 
 
@@ -36,12 +36,10 @@ class RFC7841(BaseRFC):
         "Zero app knowledge": "A consumer MUST build any page from the stream alone",
         "Additive": "Consumers MUST ignore unknown MSGIDs and fields",
     }
-    # conformance_partial inherits BaseRFC default ("partials/conformance.md.j2")
-    # introduction inherits "" → template renders the hardcoded SCOP intro
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent.parent.parent
+    repo_root = Path(__file__).resolve().parent.parent.parent
     templates_dir = repo_root / "static" / "templates"
 
     env = Environment(

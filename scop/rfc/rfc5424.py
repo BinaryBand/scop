@@ -16,7 +16,7 @@ from typing import Any
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from scop.models.common.base import BaseRFC
+from scop.rfc.base import BaseRFC
 
 
 class RFC5424(BaseRFC):
@@ -43,7 +43,7 @@ class RFC5424(BaseRFC):
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent.parent.parent
+    repo_root = Path(__file__).resolve().parent.parent.parent
     templates_dir = repo_root / "static" / "templates"
 
     env = Environment(
