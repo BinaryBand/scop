@@ -33,9 +33,9 @@ Information about the current status of this document and how to provide feedbac
 
 ## Copyright Notice
 
-Copyright (c) {{ copyright_year }} {{ author }}. All rights reserved.
+{% if copyright_notice %}{{ copyright_notice }}{% else %}Copyright (c) {{ copyright_year }} {{ author }}. All rights reserved.
 
-This document is made available under {{ license }}.
+This document is made available under {{ license }}.{% endif %}
 
 ---
 

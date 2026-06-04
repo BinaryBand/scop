@@ -80,6 +80,8 @@ class BaseRFC(BaseModel):
     repository_url: str = ""
     # Copyright year shown in Copyright Notice (e.g. "2026").
     copyright_year: str = ""
+    # Override the entire Copyright Notice body; empty → generic boilerplate.
+    copyright_notice: str = ""
     # Security Considerations body text.
     security: str = ""
     # IANA Considerations body text.

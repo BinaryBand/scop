@@ -10,55 +10,46 @@ category: "Standards Track"
 stream: "IETF"
 date: "March 2009"
 
+license: "IETF Trust Legal Provisions (BCP 78)"
 copyright_year: "2009"
 repository_url: "https://www.rfc-editor.org/info/rfc5424"
 conformance_partial: ""
 
-status_memo: |
-  This document is a structured reference representation of RFC 5424 (The
-  Syslog Protocol), formatted using RFC 7841 boilerplate for consistency with
-  the SCOP specification. It is provided for informational purposes alongside
-  SCOP, which uses RFC 5424 as its event envelope format.
+copyright_notice: |
+  Copyright (c) 2009 IETF Trust and the persons identified as the document authors. All rights reserved.
 
-  The authoritative text was published by the IETF as a Standards Track
-  document. It is available at <https://www.rfc-editor.org/rfc/rfc5424>.
+  This document is subject to [BCP 78](https://www.rfc-editor.org/bcp/bcp78) and the IETF Trust's Legal Provisions Relating to IETF Documents in effect on the date of publication of this document (<http://trustee.ietf.org/license-info>). Please review these documents carefully, as they describe your rights and restrictions with respect to this document.
+
+status_memo: |
+  This document is a structured reference representation of RFC 5424 (The Syslog Protocol), formatted using RFC 7841 boilerplate for consistency with the SCOP specification. It is provided for informational purposes alongside SCOP, which uses RFC 5424 as its event envelope format.
+
+  The authoritative text was published by the IETF as a Standards Track document. It is available at <https://www.rfc-editor.org/rfc/rfc5424>.
 
 abstract: |
-  This document describes the syslog protocol, which is used to convey event
-  notification messages. This protocol utilizes a layered architecture, which
-  allows the use of any number of transport protocols for transmission of syslog
-  messages. It also provides a message format that allows vendor-specific
-  extensions to be provided in a structured way.
+  This document describes the syslog protocol, which is used to convey event notification messages. This protocol utilizes a layered architecture, which allows the use of any number of transport protocols for transmission of syslog messages. It also provides a message format that allows vendor-specific extensions to be provided in a structured way.
 
 introduction: |
-  This document describes a layered architecture for syslog. The goal of this
-  architecture is to separate message content from message transport while
-  enabling easy extensibility for each layer.
+  This document describes a layered architecture for syslog. The goal of this architecture is to separate message content from message transport while enabling easy extensibility for each layer.
 
-  This document describes the standard format for syslog messages and outlines
-  the concept of transport mappings. It also describes structured data elements,
-  which can be used to transmit easily parseable, structured information, and
-  allows for vendor extensions.
+  This document describes the standard format for syslog messages and outlines the concept of transport mappings. It also describes structured data elements, which can be used to transmit easily parseable, structured information, and allows for vendor extensions.
 
-  The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
-  "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this
-  document are to be interpreted as described in [RFC2119] and [RFC8174].
+  The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119] and [RFC8174].
+
+iana: |
+  IANA has created two registries for this specification.
+
+  **syslog Version Values.** IANA has registered VERSION = `1` as defined in this document (§6.2.2). Version numbers MUST be incremented for any new syslog protocol specification that changes any part of the HEADER. New values must be registered via the Standards Action method.
+
+  **syslog Structured Data ID Values.** IANA has registered the SD-IDs `timeQuality`, `origin`, and `meta`, together with their associated PARAM-NAMEs, as described in §7. New SD-ID and PARAM-NAME values must be registered through the IETF Review method. Once registered, syntax and semantics of SD-IDs and PARAM-NAMEs MUST NOT be altered; a change requires a new name. Names containing an at-sign (`@`) are locally extensible and are not controlled by IANA.
 
 security: |
-  **Plaintext transport.** Syslog has traditionally been transported over
-  plaintext UDP, meaning messages are visible to any network intermediary.
-  Deployments SHOULD use an encrypted transport (e.g. TLS) to protect message
-  confidentiality and integrity.
+  **Plaintext transport.** Syslog has traditionally been transported over plaintext UDP, meaning messages are visible to any network intermediary. Deployments SHOULD use an encrypted transport (e.g. TLS) to protect message confidentiality and integrity.
 
-  **Message forgery.** Syslog provides no authentication or origin verification.
-  Receivers SHOULD use network-layer controls to limit acceptable message sources.
+  **Message forgery.** Syslog provides no authentication or origin verification. Receivers SHOULD use network-layer controls to limit acceptable message sources.
 
-  **Sensitive data.** Applications MUST NOT include secrets, passwords,
-  cryptographic keys, or personally identifiable information (PII) in syslog
-  messages.
+  **Sensitive data.** Applications MUST NOT include secrets, passwords, cryptographic keys, or personally identifiable information (PII) in syslog messages.
 
-  **Denial of service.** An attacker may flood a syslog collector. Receivers
-  SHOULD implement rate limiting and storage quotas.
+  **Denial of service.** An attacker may flood a syslog collector. Receivers SHOULD implement rate limiting and storage quotas.
 
 normative_references:
   - key: RFC2119
@@ -95,13 +86,11 @@ sections:
       HEADER     = PRI VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID
       ```
 
-      Every octet of the MSG part MUST be a valid UTF-8 character. Syslog
-      messages MUST NOT exceed 480 octets; they SHOULD NOT exceed 2048 octets.
+      Every octet of the MSG part MUST be a valid UTF-8 character. Syslog messages MUST NOT exceed 480 octets; they SHOULD NOT exceed 2048 octets.
 
   - title: "PRI — Facility and Severity"
     body: |
-      The PRI value is composed as `(Facility × 8) + Severity`, encoded as a
-      decimal integer between angle brackets (e.g. `<134>`).
+      The PRI value is composed as `(Facility × 8) + Severity`, encoded as a decimal integer between angle brackets (e.g. `<134>`).
 
       **Facility codes** (0–23):
 
@@ -125,8 +114,7 @@ sections:
       | 6 | INFO | Informational messages |
       | 7 | DEBUG | Debug-level messages |
 
-      SCOP uses severity only (0–7) as the `pri` wire value, fixing the
-      facility at 0. See SCOP §4.2.1.
+      SCOP uses severity only (0–7) as the `pri` wire value, fixing the facility at 0. See SCOP §4.2.1.
 
   - title: "HEADER Fields"
     body: |
@@ -142,28 +130,21 @@ sections:
       | PROCID | `pid` | — | Process name or identifier |
       | MSGID | `msgid` | ✓ | Message type identifier (SCOP uses as event type) |
 
-      SCOP requires `pri`, `msgid`, and `msg` on every event. `ts`, `app`, and
-      `pid` are optional.
+      SCOP requires `pri`, `msgid`, and `msg` on every event. `ts`, `app`, and `pid` are optional.
 
   - title: "STRUCTURED-DATA"
     body: |
-      STRUCTURED-DATA provides a mechanism to express information in a
-      well-defined, easily parseable format. It consists of zero or more
-      SD-ELEMENTs, each containing an SD-ID and zero or more SD-PARAMs.
+      STRUCTURED-DATA provides a mechanism to express information in a well-defined, easily parseable format. It consists of zero or more SD-ELEMENTs, each containing an SD-ID and zero or more SD-PARAMs.
 
       ```abnf
       STRUCTURED-DATA = NILVALUE / 1*SD-ELEMENT
       SD-ELEMENT      = "[" SD-ID *(SP PARAM-NAME "=" %d34 PARAM-VALUE %d34) "]"
       ```
 
-      SCOP does not use STRUCTURED-DATA; all structured content is carried in
-      the MSGID-specific JSON fields of the event body.
+      SCOP does not use STRUCTURED-DATA; all structured content is carried in the MSGID-specific JSON fields of the event body.
 
   - title: "MSG"
     body: |
-      The MSG part contains the free-form log message. It MUST be a valid UTF-8
-      string. A BOM (`%xEF.BB.BF`) MAY be prepended to indicate UTF-8 encoding.
+      The MSG part contains the free-form log message. It MUST be a valid UTF-8 string. A BOM (`%xEF.BB.BF`) MAY be prepended to indicate UTF-8 encoding.
 
-      In SCOP, the `msg` field maps to MSG and carries a complete,
-      human-readable single line. It MUST NOT contain newline characters and
-      MUST NOT verbatim duplicate any other field in the event.
+      In SCOP, the `msg` field maps to MSG and carries a complete, human-readable single line. It MUST NOT contain newline characters and MUST NOT verbatim duplicate any other field in the event.

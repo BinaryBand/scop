@@ -5,7 +5,7 @@ status: "Draft"
 
 # RFC 7841 metadata
 working_group: "Independent Submission"
-author: "Shane (editor)"
+author: "Shane D. (editor)"
 author_affiliation: "Independent"
 category: "Informational"
 stream: "Independent Submission"
@@ -13,7 +13,7 @@ date: "June 2026"
 issn: "2070-1721"
 
 copyright_year: "2026"
-repository_url: "https://github.com/shaneafsar/scop"
+repository_url: "https://github.com/BinaryBand/scop.git"
 
 abstract: |
   SCOP defines a machine-readable output format for CLI applications that is simultaneously human-readable as plain text and automatically translatable to graphical user interfaces. It composes three existing standards — POSIX.1 Utility Conventions, GNU Coding Standards, and RFC 5424 — adding a typed event vocabulary, a room-based page model, and a three-flag protocol that together enable any conforming CLI application to be rendered as a GUI without application-specific code.
