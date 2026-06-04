@@ -8,7 +8,7 @@ Strategy
   - apply one targeted mutation (wrong order, missing wrapper, schema mismatch,
     duplicate id, orphaned lifecycle event) and assert SCOPStreamError is raised.
 
-All generated pri values use SCOP facility 16 (128-135).
+All generated pri values use SCOP severity range (0-7).
 All generated strings exclude newlines, carriage returns, and empty/whitespace.
 """
 
@@ -37,7 +37,7 @@ ROOM = st.one_of(st.none(), SAFE_STR)
 def _ev(msgid: str, room: Optional[str] = "room", **kwargs) -> NDJSONEvent:
     """Build a minimal valid NDJSONEvent dict and parse it."""
     base: Dict[str, Any] = {
-        "pri": 134,
+        "pri": 6,
         "msgid": msgid,
         "room": room,
         "msg": f"ok {msgid}",

@@ -20,7 +20,7 @@ from scop.models.ndjson import NDJSONEvent
 
 # --- shared building blocks -------------------------------------------------
 
-PRI = st.integers(min_value=128, max_value=135)
+PRI = st.integers(min_value=0, max_value=7)
 # Disallow newline characters and whitespace-only strings for `msg` and similar fields
 NON_EMPTY_STR = st.text(min_size=1).filter(
     lambda s: s.strip() != "" and "\n" not in s and "\r" not in s

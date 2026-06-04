@@ -91,7 +91,7 @@ class RFC7841(BaseModel):
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent.parent
+    repo_root = Path(__file__).resolve().parent.parent.parent.parent
     templates_dir = repo_root / "static" / "templates"
 
     env = Environment(

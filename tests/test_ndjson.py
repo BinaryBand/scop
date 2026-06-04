@@ -17,8 +17,7 @@ from scop.models.ndjson import MSGID, NDJSONEvent
 
 
 def base_event(msgid: MSGID = "SCALAR_SET", room=None, msg: str = "ok") -> dict:
-    # Use SCOP facility 16 (pri range 128..135 for severity 0..7); default severity 6 -> pri=128+6=134
-    return {"pri": 134, "msgid": msgid, "room": room, "msg": msg}
+    return {"pri": 6, "msgid": msgid, "room": room, "msg": msg}
 
 
 def test_valid_scalar_set_minimal_and_json_roundtrip():
@@ -242,7 +241,7 @@ def test_model_is_frozen():
 
 
 @given(
-    st.integers(min_value=128, max_value=135),
+    st.integers(min_value=0, max_value=7),
     # Restrict to strings that are not solely whitespace so `msg.strip()` is non-empty
     st.text(alphabet=string.ascii_letters + string.digits + " ", min_size=1).filter(
         lambda s: s.strip() != ""
