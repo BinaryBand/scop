@@ -15,9 +15,6 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
-DEFAULT_VERSION = "0.1.0"
-
-
 def _build_flags_table(ns: dict) -> str:
     """Build flags table markdown from NORTH_STAR.yaml::flag_contracts."""
     try:
@@ -133,46 +130,37 @@ def render_templates():
         keep_trailing_newline=True,
     )
 
-    # Default version; may be overridden by NORTH_STAR.yaml.spec_version
-    version = DEFAULT_VERSION
-
-    # Load NORTH_STAR.yaml to generate stable severity rows for the partial.
     ns = {}
     north_star_path = repo_root / "static" / "NORTH_STAR.yaml"
     if north_star_path.exists():
         try:
             ns = yaml.safe_load(north_star_path.read_text(encoding="utf-8"))
-            # Use spec_version from NORTH_STAR.yaml if present
-            try:
-                version = ns.get("spec_version", DEFAULT_VERSION)
-            except Exception:
-                version = DEFAULT_VERSION
         except Exception as e:
             print(f"Error reading NORTH_STAR.yaml: {e}", file=sys.stderr)
 
     severity_rows = _build_severity_rows(ns)
     flags_table = _build_flags_table(ns)
 
-    pattern = "SCOP*.md.j2"
-    written = []
+    from scop.rfc.base import BaseRFC
 
-    for tpl_path in templates_dir.glob(pattern):
-        out_name = tpl_path.name[:-3]  # strip .j2
-        out_path = repo_root / out_name
+    meta_path = repo_root / "static" / "METASCOP.yaml"
+    raw = yaml.safe_load(meta_path.read_text(encoding="utf-8"))
+    model = BaseRFC.model_validate(raw)
+    model.north_star = ns  # NORTH_STAR.yaml already loaded above
 
-        template = env.get_template(tpl_path.name)
-        rendered = template.render(
-            {
-                "version": version,
-                "severity_rows": severity_rows,
-                "north_star": ns,
-                "flags_table": flags_table,
-            }
-        )
+    template = env.get_template("RFC7841.md.j2")
+    rendered = template.render(
+        {
+            **model.model_dump(),
+            "severity_rows": severity_rows,
+            "flags_table": flags_table,
+        }
+    )
 
-        out_path.write_text(rendered, encoding="utf-8")
-        written.append(out_path)
-        print(f"Wrote: {out_path}")
+    out_path = repo_root / "SCOP.md"
+    out_path.write_text(rendered, encoding="utf-8")
+    written = [out_path]
+    print(f"Wrote: {out_path}")
 
     if not written:
         print("No templates rendered.")
