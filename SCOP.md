@@ -515,7 +515,7 @@ This section defines a reference state model that consumers SHOULD maintain. Imp
 
 #### State Object
 
-```
+```proto
 Page {
   room:     string | null
   chrome:   Chrome

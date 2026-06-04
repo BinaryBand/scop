@@ -187,7 +187,7 @@ sections:
 
           #### State Object
 
-          ```
+          ```proto
           Page {
             room:     string | null
             chrome:   Chrome
