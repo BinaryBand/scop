@@ -31,6 +31,14 @@ class RFC7841Section(BaseModel):
     subsections: list[RFC7841Section] = []
 
 
+class ToCEntry(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    number: str
+    title: str
+    anchor: str
+
+
 class RFC7841(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
@@ -85,6 +93,31 @@ class RFC7841(BaseModel):
         if self.status == "Draft":
             return self.version_no + "-draft"
         return self.version_no
+
+    @computed_field
+    @property
+    def toc(self) -> list[ToCEntry]:
+        A = 3  # fixed sections: Introduction, Terminology, Design Principles
+        C = len(self.sections) + A + 1  # Conformance section number
+
+        def entry(n: int, title: str) -> ToCEntry:
+            anchor = f"#{n}-{title.lower().replace(' ', '-')}"
+            return ToCEntry(number=str(n), title=title, anchor=anchor)
+
+        entries = [
+            entry(1, "Introduction"),
+            entry(2, "Terminology"),
+            entry(3, "Design Principles"),
+        ]
+        for i, section in enumerate(self.sections, start=A + 1):
+            entries.append(entry(i, section.title))
+        entries += [
+            entry(C, "Conformance"),
+            entry(C + 1, "Security Considerations"),
+            entry(C + 2, "IANA Considerations"),
+            entry(C + 3, "References"),
+        ]
+        return entries
 
 
 # --- testing ---

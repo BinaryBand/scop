@@ -39,14 +39,7 @@ This document is made available under {{ license }}.
 
 ## Table of Contents
 
-- [1. Introduction](#1-introduction)
-- [2. Terminology](#2-terminology)
-- [3. Design Principles](#3-design-principles)
-{% for f in sections %}- [{{ loop.index + A }}. {{ f.title }}](#{{ loop.index + A }}-{{ f.title | lower | replace(' ', '-') }})
-{% endfor %}- [{{ C }}. Conformance](#{{ C }}-conformance)
-- [{{ C + 1 }}. Security Considerations](#{{ C + 1 }}-security-considerations)
-- [{{ C + 2 }}. IANA Considerations](#{{ C + 2 }}-iana-considerations)
-- [{{ C + 3 }}. References](#{{ C + 3 }}-references)
+{% include 'partials/toc.md.j2' %}
 
 ---
 
