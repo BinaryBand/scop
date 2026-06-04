@@ -152,6 +152,15 @@ def render_templates():
     data = model.model_dump()
     data.setdefault("north_star", ns)
 
+    # Provide a nested TOC structure for advanced partial rendering.
+    try:
+        from scop.partials.toc import ToCGenerator
+
+        toc_gen = ToCGenerator.from_rfc(model)
+        data["toc_nested"] = toc_gen.as_context()
+    except Exception:
+        data["toc_nested"] = None
+
     # Render the consumer routing partial (table) and inject it into the
     # "Auto-Translation Rules" section body so subsections (10.1) render after it.
     try:

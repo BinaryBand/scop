@@ -1,2 +1,16 @@
-{% for entry in toc %}- [{{ entry.number }}. {{ entry.title }}]({{ entry.anchor }})
-{% endfor %}
+{%- macro render(items, level=0) -%}
+{%- for e in items -%}
+{{ '  ' * level }}- [{{ e.number }}. {{ e.title }}]({{ e.anchor }}){{ "\n" }}
+{%- if e.children -%}
+{{ render(e.children, level + 1) }}
+{%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{%- if toc_nested -%}
+{{ render(toc_nested) }}
+{%- else -%}
+{%- for entry in toc -%}
+- [{{ entry.number }}. {{ entry.title }}]({{ entry.anchor }}){{ "\n" }}
+{%- endfor -%}
+{%- endif -%}
