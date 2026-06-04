@@ -15,6 +15,23 @@ copyright_year: "2009"
 repository_url: "https://www.rfc-editor.org/info/rfc5424"
 conformance_partial: ""
 
+terms:
+  SYSLOG-MSG: "a complete syslog message following the RFC 5424 ABNF definition."
+  HEADER: "the structured prefix containing PRI, VERSION, TIMESTAMP, HOSTNAME, APP-NAME, PROCID, and MSGID."
+  PRI: "the Priority value, encoding Facility and Severity as (Facility × 8) + Severity."
+  Facility: "a numeric code (0–23) indicating the type of process generating the message."
+  Severity: "an importance level (0–7) from EMERG to DEBUG, as defined in this document."
+  STRUCTURED-DATA: "optional field providing machine-parseable key-value pairs."
+  SD-ELEMENT: "a named collection of PARAM-NAME / PARAM-VALUE pairs within STRUCTURED-DATA."
+  MSG: "the free-form UTF-8 log line; mapped to the `msg` field in SCOP."
+
+principles:
+  Layered: "Separates message content from transport; any transport mapping may be used"
+  Extensible: "Vendor-specific extensions are supported via STRUCTURED-DATA SD-IDs"
+  Structured: "SD-ELEMENTs provide machine-parseable data alongside free-form MSG"
+  Transport-independent: "Message format is defined independently of any specific transport protocol"
+  Backwards-compatible: "Inspired by BSD syslog (RFC 3164) while providing a Standards-Track format"
+
 copyright_notice: |
   Copyright (c) 2009 IETF Trust and the persons identified as the document authors. All rights reserved.
 

@@ -9,33 +9,17 @@ from typing import Any
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from scop.rfc.base import BaseRFC, RFCSection
+from scop.rfc.base import BaseRFC
 from scop.template import _build_flags_table, _build_severity_rows
-
-# Backward-compatibility alias for existing imports
-RFC7841Section = RFCSection
 
 
 class RFC7841(BaseRFC):
-    terms: dict[str, str] = {
-        "Producer": "a SCOP-conforming CLI application that emits events.",
-        "Consumer": "software that reads a SCOP event stream and renders it.",
-        "Event": "a single NDJSON line emitted by a producer.",
-        "Stream": "the ordered sequence of events from one command invocation.",
-        "MSGID": "a string identifier classifying an event by its data type (§7).",
-        "Room": "a page context derived from the subcommand path (§6).",
-        "Page": "a GUI display unit corresponding to one room, assembled from one or more streams.",
-        "Slot": "a named region in a page layout; events are routed to slots by MSGID family.",
-    }
+    """SCOP specification document, rendered using RFC 7841 boilerplate.
 
-    principles: dict[str, str] = {
-        "CLI first": "`msg` MUST always be a complete, human-readable line",
-        "Standard-grounded": "SCOP MUST NOT conflict with POSIX or GNU; it defers to them",
-        "Data-typed": "MSGIDs name the data type, not the display form",
-        "Rooms derived": "Room is always derived from the command path — never declared",
-        "Zero app knowledge": "A consumer MUST build any page from the stream alone",
-        "Additive": "Consumers MUST ignore unknown MSGIDs and fields",
-    }
+    All document content (terms, principles, sections, references) is loaded
+    from static/META.yaml. This class enforces only structural constraints
+    inherited from BaseRFC.
+    """
 
 
 def main() -> int:
@@ -51,7 +35,7 @@ def main() -> int:
     tpl_name = "RFC7841.md.j2"
     out_path = repo_root / tpl_name[: -len(".j2")]
 
-    meta_path = repo_root / "static" / "META.yaml"
+    meta_path = repo_root / "static" / "METASCOP.yaml"
     raw: Any = yaml.safe_load(meta_path.read_text(encoding="utf-8"))
     model = RFC7841.model_validate(raw)
 
