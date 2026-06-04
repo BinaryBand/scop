@@ -105,9 +105,22 @@ sections:
   - title: "Foundation Standards"
     subsections:
       - title: "POSIX.1 and GNU"
-        partial: "partials/flags.md.j2"
         body: |
           Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags with defined contracts; each flag's event contract is defined in §8. Flags marked † have no defined contract yet.
+        tables:
+          - headers: ["Flag", "Short", "Category"]
+            rows:
+              - ["`--help`", "`-h`", "query"]
+              - ["`--version`", "", "query"]
+              - ["`--list`", "`-l`", "query"]
+              - ["`--status`", "", "query"]
+              - ["`--quiet`", "`-q`", "mode"]
+              - ["`--verbose`", "`-v`", "mode"]
+              - ["`--dry-run`", "`-n`", "modifier"]
+              - ["`--recursive`", "`-r`", "modifier"]
+              - ["`--force`", "`-f`", "modifier"]
+              - ["`--output`", "`-o`", "other †"]
+            note: "*† Contract not yet defined; see pending additions.*"
 
       - title: "RFC 5424 Fields"
         body: |

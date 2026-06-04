@@ -1,0 +1,7 @@
+| {{ table.headers | join(' | ') }} |
+| {% for _ in table.headers %}---{% if not loop.last %} | {% endif %}{% endfor %} |
+{% for row in table.rows %}| {{ row | join(' | ') }} |
+{% endfor %}
+{%- if table.note %}
+{{ table.note }}
+{% endif %}

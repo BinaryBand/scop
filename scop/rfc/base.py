@@ -17,6 +17,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
+from scop.partials.table import MarkdownTable
+
 _Category = Literal["Draft", "Proposed Standard", "Standard"]
 _Shortname = Annotated[str, Field(pattern=r"^[A-Z0-9]+$")]
 _Version = Annotated[str, Field(pattern=r"^\d+(\.\d+)*$")]
@@ -28,6 +30,7 @@ class RFCSection(BaseModel):
     title: str
     body: str = ""
     partial: str = ""
+    tables: list[MarkdownTable] = []
     subsections: list[RFCSection] = []
 
 

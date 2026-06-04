@@ -75,11 +75,13 @@ This document is made available under {{ license }}.{% endif %}
 ## {{ section_no }}. {{ f.title }}
 
 {{ f.body }}
+{% for table in f.tables %}{% include 'partials/table.md.j2' %}{% endfor %}
 {% for g in f.subsections %}
 {% set subsection_no = section_no ~ '.' ~ loop.index %}
 ### {{ subsection_no }} {{ g.title }}
 
 {{ g.body }}
+{% for table in g.tables %}{% include 'partials/table.md.j2' %}{% endfor %}
 {% if g.partial %}
 {% include g.partial %}
 {% else %}
@@ -90,6 +92,7 @@ This document is made available under {{ license }}.{% endif %}
 {% include h.partial %}
 {% else %}
 {{ h.body }}
+{% for table in h.tables %}{% include 'partials/table.md.j2' %}{% endfor %}
 {% endif %}
 {% endfor %}
 {% endif %}
