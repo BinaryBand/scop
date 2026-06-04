@@ -1,0 +1,117 @@
+title: "The Syslog Protocol"
+shortname: RFC5424
+version_no: "1.0"
+status: "Proposed Standard"
+
+working_group: "IETF"
+author: "R. Gerhards"
+author_affiliation: "Adiscon GmbH"
+category: "Standards Track"
+stream: "IETF"
+date: "March 2009"
+
+conformance_partial: ""
+
+abstract: |
+  This document describes the syslog protocol, which is used to convey event
+  notification messages. This protocol utilizes a layered architecture, which
+  allows the use of any number of transport protocols for transmission of syslog
+  messages. It also provides a message format that allows vendor-specific
+  extensions to be provided in a structured way.
+
+introduction: |
+  This document describes a layered architecture for syslog. The goal of this
+  architecture is to separate message content from message transport while
+  enabling easy extensibility for each layer.
+
+  This document describes the standard format for syslog messages and outlines
+  the concept of transport mappings. It also describes structured data elements,
+  which can be used to transmit easily parseable, structured information, and
+  allows for vendor extensions.
+
+  The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+  "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this
+  document are to be interpreted as described in [RFC2119] and [RFC8174].
+
+sections:
+  - title: "Message Format"
+    body: |
+      A syslog message has the following ABNF definition (simplified):
+
+      ```abnf
+      SYSLOG-MSG = HEADER SP STRUCTURED-DATA [SP MSG]
+      HEADER     = PRI VERSION SP TIMESTAMP SP HOSTNAME SP APP-NAME SP PROCID SP MSGID
+      ```
+
+      Every octet of the MSG part MUST be a valid UTF-8 character. Syslog
+      messages MUST NOT exceed 480 octets; they SHOULD NOT exceed 2048 octets.
+
+  - title: "PRI — Facility and Severity"
+    body: |
+      The PRI value is composed as `(Facility × 8) + Severity`, encoded as a
+      decimal integer between angle brackets (e.g. `<134>`).
+
+      **Facility codes** (0–23):
+
+      | Code | Keyword | Description |
+      | --- | --- | --- |
+      | 0 | kern | Kernel messages |
+      | 1 | user | User-level messages |
+      | 16 | local0 | Local use 0 |
+      | 17–23 | local1–7 | Local use 1–7 |
+
+      **Severity values** (0–7):
+
+      | Value | Keyword | Description |
+      | --- | --- | --- |
+      | 0 | EMERG | System is unusable |
+      | 1 | ALERT | Action must be taken immediately |
+      | 2 | CRIT | Critical conditions |
+      | 3 | ERR | Error conditions |
+      | 4 | WARNING | Warning conditions |
+      | 5 | NOTICE | Normal but significant condition |
+      | 6 | INFO | Informational messages |
+      | 7 | DEBUG | Debug-level messages |
+
+      SCOP uses severity only (0–7) as the `pri` wire value, fixing the
+      facility at 0. See SCOP §4.2.1.
+
+  - title: "HEADER Fields"
+    body: |
+      The HEADER consists of the following fields:
+
+      | Field | Key | Required | Description |
+      | --- | --- | --- | --- |
+      | PRI | `pri` | ✓ | Facility × 8 + Severity |
+      | VERSION | — | ✓ | Always `1` for RFC 5424 |
+      | TIMESTAMP | `ts` | — | ISO 8601 (e.g. `2003-10-11T22:14:15.003Z`) |
+      | HOSTNAME | — | — | FQDN, IP address, or hostname |
+      | APP-NAME | `app` | — | Device or application name |
+      | PROCID | `pid` | — | Process name or identifier |
+      | MSGID | `msgid` | ✓ | Message type identifier (SCOP uses as event type) |
+
+      SCOP requires `pri`, `msgid`, and `msg` on every event. `ts`, `app`, and
+      `pid` are optional.
+
+  - title: "STRUCTURED-DATA"
+    body: |
+      STRUCTURED-DATA provides a mechanism to express information in a
+      well-defined, easily parseable format. It consists of zero or more
+      SD-ELEMENTs, each containing an SD-ID and zero or more SD-PARAMs.
+
+      ```abnf
+      STRUCTURED-DATA = NILVALUE / 1*SD-ELEMENT
+      SD-ELEMENT      = "[" SD-ID *(SP PARAM-NAME "=" %d34 PARAM-VALUE %d34) "]"
+      ```
+
+      SCOP does not use STRUCTURED-DATA; all structured content is carried in
+      the MSGID-specific JSON fields of the event body.
+
+  - title: "MSG"
+    body: |
+      The MSG part contains the free-form log message. It MUST be a valid UTF-8
+      string. A BOM (`%xEF.BB.BF`) MAY be prepended to indicate UTF-8 encoding.
+
+      In SCOP, the `msg` field maps to MSG and carries a complete,
+      human-readable single line. It MUST NOT contain newline characters and
+      MUST NOT verbatim duplicate any other field in the event.

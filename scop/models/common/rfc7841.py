@@ -4,62 +4,19 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Any
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-)
 
+from scop.models.common.base import BaseRFC, RFCSection
 from scop.template import _build_flags_table, _build_severity_rows
 
-_Category = Literal["Draft", "Proposed Standard", "Standard"]
-_Shortname = Annotated[str, Field(pattern=r"^[A-Z0-9]+$")]
-_Version = Annotated[str, Field(pattern=r"^\d+(\.\d+)*$")]
+# Backward-compatibility alias for existing imports (e.g. rfc2119.py)
+RFC7841Section = RFCSection
 
 
-class RFC7841Section(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    title: str
-    body: str = ""
-    partial: str = ""
-    subsections: list[RFC7841Section] = []
-
-
-class ToCEntry(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-
-    number: str
-    title: str
-    anchor: str
-
-
-class RFC7841(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    title: str
-    shortname: _Shortname
-    version_no: _Version
-    status: _Category
-    abstract: str = ""
-    license: str = "CC0 1.0 Universal (Public Domain)"
-
-    # RFC 7841 metadata
-    working_group: str = "Independent Submission"
-    author: str = ""
-    author_affiliation: str = ""
-    category: str = "Informational"
-    stream: str = "Independent Submission"
-    date: str = ""
-    issn: str = "2070-1721"
-
-    north_star: Any = {}
-
+class RFC7841(BaseRFC):
     terms: dict[str, str] = {
         "Producer": "a SCOP-conforming CLI application that emits events.",
         "Consumer": "software that reads a SCOP event stream and renders it.",
@@ -79,48 +36,8 @@ class RFC7841(BaseModel):
         "Zero app knowledge": "A consumer MUST build any page from the stream alone",
         "Additive": "Consumers MUST ignore unknown MSGIDs and fields",
     }
-
-    sections: list[RFC7841Section] = []
-
-    @computed_field
-    @property
-    def identifier(self) -> str:
-        return f"{self.shortname}-v{self.version}"
-
-    @computed_field
-    @property
-    def version(self) -> str:
-        if self.status == "Draft":
-            return self.version_no + "-draft"
-        return self.version_no
-
-    @computed_field
-    @property
-    def toc(self) -> list[ToCEntry]:
-        A = 3  # fixed sections: Introduction, Terminology, Design Principles
-        C = len(self.sections) + A + 1  # Conformance section number
-
-        def entry(n: int, title: str) -> ToCEntry:
-            anchor = f"#{n}-{title.lower().replace(' ', '-')}"
-            return ToCEntry(number=str(n), title=title, anchor=anchor)
-
-        entries = [
-            entry(1, "Introduction"),
-            entry(2, "Terminology"),
-            entry(3, "Design Principles"),
-        ]
-        for i, section in enumerate(self.sections, start=A + 1):
-            entries.append(entry(i, section.title))
-        entries += [
-            entry(C, "Conformance"),
-            entry(C + 1, "Security Considerations"),
-            entry(C + 2, "IANA Considerations"),
-            entry(C + 3, "References"),
-        ]
-        return entries
-
-
-# --- testing ---
+    # conformance_partial inherits BaseRFC default ("partials/conformance.md.j2")
+    # introduction inherits "" → template renders the hardcoded SCOP intro
 
 
 def main() -> int:
