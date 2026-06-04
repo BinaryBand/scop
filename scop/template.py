@@ -7,11 +7,11 @@ rendered output to the repository root with the `.j2` suffix removed.
 No template variables are provided (empty context) for this initial setup.
 """
 
-from pathlib import Path
 import subprocess
 import sys
-import yaml
+from pathlib import Path
 
+import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
@@ -148,10 +148,29 @@ def render_templates():
     model = BaseRFC.model_validate(raw)
     model.north_star = ns  # NORTH_STAR.yaml already loaded above
 
+    # Prepare a mutable dict for rendering and ensure north_star is present
+    data = model.model_dump()
+    data.setdefault("north_star", ns)
+
+    # Render the consumer routing partial (table) and inject it into the
+    # "Auto-Translation Rules" section body so subsections (10.1) render after it.
+    try:
+        routing_tmpl = env.get_template("partials/consumer_routing.md.j2")
+        rendered_routing = routing_tmpl.render({**data, "north_star": ns})
+    except Exception:
+        rendered_routing = None
+
+    if rendered_routing:
+        for s in data.get("sections", []):
+            if s.get("title", "").strip() == "Auto-Translation Rules":
+                s.pop("partial", None)
+                s["body"] = rendered_routing
+                break
+
     template = env.get_template("RFC7841.md.j2")
     rendered = template.render(
         {
-            **model.model_dump(),
+            **data,
             "severity_rows": severity_rows,
             "flags_table": flags_table,
         }

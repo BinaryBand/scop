@@ -2,7 +2,7 @@
 
 Independent Submission
 **Author:** Shane D. (editor) (Independent)
-**Document identifier:** SCOP-v0.2.0-draft
+**Document identifier:** SCOP-v0.3.0-draft
 **Category:** Informational
 **Date:** June 2026
 **License:** CC0 1.0 Universal (Public Domain)
@@ -503,6 +503,92 @@ A conforming consumer routes events using this table. No application knowledge i
 Unknown MSGIDs MUST be routed to the log area using `msg`. Unknown fields MUST be ignored.
 
 Consumers MUST maintain independent slot state per `id` for `PROCESS_*` events. A room MAY contain multiple concurrent processes with distinct `id` values active simultaneously; consumers MUST NOT assume a 1:1 mapping between a room and an active process.
+
+### 10.1 Consumer State Model (Informative)
+
+This section defines a reference state model that consumers SHOULD maintain. Implementations MAY use any internal representation provided routing follows §10. The presentation layer MAY render slot contents in any form.
+
+#### State Object
+
+```
+Page {
+  room:     string | null
+  chrome:   Chrome
+  stats:    Map<id, ScalarValue>
+  content:  Map<id, Table | List>
+  actions:  HelpItem[]
+  activity: Map<id, ProcessState>
+}
+
+Chrome {
+  title:     string
+  subtitle?: string
+  icon?:     string
+}
+
+ScalarValue {
+  id, label, value, type
+  unit?:         string
+  display_hint?: string
+}
+
+Table {
+  id, label, schema, display_hint?, column_types?
+  rows: Map<row_id, values>
+}
+
+List {
+  id, label, ordered
+  items: Map<item_id, value>
+}
+
+HelpItem {
+  command, description
+  kind?:   "action" | "group"
+  params?: Param[]
+}
+
+ProcessState {
+  id, label
+  total?:     number
+  current?:   number
+  ok?:        boolean
+  dry_run?:   boolean
+  recursive?: boolean
+  force?:     boolean
+  log:        string[]
+}
+```
+
+#### State Transitions
+
+| Event                                           | Transition                                                         |
+| ----------------------------------------------- | ------------------------------------------------------------------ |
+| `PAGE_BEGIN` — intent `"query"`, same room      | Update `chrome`; all other slots persist unchanged                 |
+| `PAGE_BEGIN` — intent `"query"`, different room | Replace full `Page`; set `room`; clear all slots                   |
+| `PAGE_BEGIN` — intent `"action"`                | No slot change; signals overlay display mode to presentation layer |
+| `SCALAR_SET`                                    | Upsert `stats[id]`                                                 |
+| `SCALAR_CLEAR`                                  | Remove `stats[id]`                                                 |
+| `TABLE_DECLARE`                                 | Initialise `content[id]` as empty `Table`                          |
+| `TABLE_ROW`                                     | Append row to `content[id].rows`                                   |
+| `TABLE_UPDATE`                                  | Update row in `content[id].rows`                                   |
+| `TABLE_END`                                     | Finalise `content[id]`                                             |
+| `LIST_DECLARE` where `id = "help"`              | Reset `actions` list                                               |
+| `LIST_APPEND` where `id = "help"`               | Append to `actions`                                                |
+| `LIST_UPDATE` where `id = "help"`               | Update entry in `actions`                                          |
+| `LIST_REMOVE` where `id = "help"`               | Remove entry from `actions`                                        |
+| `LIST_END` where `id = "help"`                  | Finalise `actions`                                                 |
+| `LIST_DECLARE` — other                          | Initialise `content[id]` as empty `List`                           |
+| `LIST_APPEND` — other                           | Append to `content[id].items`                                      |
+| `LIST_UPDATE` — other                           | Update item in `content[id].items`                                 |
+| `LIST_REMOVE` — other                           | Remove item from `content[id].items`                               |
+| `LIST_END` — other                              | Finalise `content[id]`                                             |
+| `PROCESS_BEGIN`                                 | Initialise `activity[id]`; set `label`, `total`                    |
+| `PROCESS_UPDATE`                                | Update `activity[id].current`, `total`                             |
+| `PROCESS_LOG`                                   | Append `msg` to `activity[id].log`                                 |
+| `PROCESS_END`                                   | Set `activity[id].ok`; finalise                                    |
+| `PAGE_END` — intent `"query"`                   | Stream complete; `Page` persists as-is                             |
+| `PAGE_END` — intent `"action"`                  | Overlay mode ends; `activity` entries retained in `Page`           |
 
 ---
 
