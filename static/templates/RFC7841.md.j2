@@ -22,17 +22,18 @@
 
 ## Status of This Memo
 
-This document is not an Internet Standards Track specification; it is published for informational purposes.
+{% if status_memo %}{{ status_memo }}{% else %}This document is not an Internet Standards Track specification; it is published for informational purposes.
 
 The author intends to submit this document to the RFC Editor as an Independent Submission. It has not yet been reviewed or approved for publication. Documents approved for publication by the RFC Editor are not a candidate for any level of Internet Standard; see [Section 2 of RFC 7841](https://www.rfc-editor.org/info/rfc7841/#2-rfc-streams-and-internet-standards).
-
-Information about the current status of this document and how to provide feedback may be obtained at <https://github.com/shaneafsar/scop>.
+{% if repository_url %}
+Information about the current status of this document and how to provide feedback may be obtained at <{{ repository_url }}>.
+{% endif %}{% endif %}
 
 ---
 
 ## Copyright Notice
 
-Copyright (c) 2026 {{ author }}. All rights reserved.
+Copyright (c) {{ copyright_year }} {{ author }}. All rights reserved.
 
 This document is made available under {{ license }}.
 
@@ -46,21 +47,7 @@ This document is made available under {{ license }}.
 
 ## 1. Introduction
 
-{% if introduction %}{{ introduction }}{% else %}CLI applications lack a formal output standard. Every CLI-to-GUI bridge must be written per-application, duplicating effort and coupling tightly to application internals. SCOP addresses this by defining structured output that is CLI-first (`msg` always readable as plain text), standard-grounded (builds on POSIX, GNU, RFC 5424), and auto-translatable (a conforming renderer needs no app-specific code).
-
-SCOP defines a wire format, event vocabulary, room model, GNU flag contracts, and page template. It does not define GUI rendering details, transport beyond stdout, authentication, or application business logic.
-
-SCOP is a composition, not a replacement:
-
-| Layer | Standard | Role |
-| --- | --- | --- |
-| Input | POSIX.1 Ch.12 + GNU | flags, subcommands |
-| Envelope | RFC 5424 | event fields, severity |
-| Serialisation | NDJSON | wire format |
-| Output | SCOP | vocabulary + page model |
-
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119] and [RFC8174].
-{% endif %}
+{{ introduction }}
 
 ---
 
@@ -93,10 +80,6 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 ### {{ subsection_no }} {{ g.title }}
 
 {{ g.body }}
-{% if g.title == "POSIX.1 and GNU" %}
-{{ flags_table }}
-
-{% endif %}
 {% if g.partial %}
 {% include g.partial %}
 {% else %}
@@ -127,19 +110,13 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 {% endif %}
 ## {{ C + conf_offset }}. Security Considerations
 
-**Injection.** String values are untrusted. Consumers MUST sanitise before rendering in HTML or injection-sensitive contexts.
-
-**Denial of service.** Producers MAY emit unbounded events. Consumers SHOULD implement stream size limits.
-
-**Sensitive data.** Producers MUST NOT include secrets, credentials, or PII in events.
-
-**Dry run.** Consumers MUST NOT suppress `dry_run: true` annotations. Users MUST be able to distinguish dry-run output from real output.
+{{ security }}
 
 ---
 
 ## {{ C + conf_offset + 1 }}. IANA Considerations
 
-This document has no IANA actions.
+{{ iana }}
 
 ---
 
@@ -147,21 +124,13 @@ This document has no IANA actions.
 
 ### Normative References
 
-- **\[RFC2119\]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, March 1997. <https://www.rfc-editor.org/info/rfc2119>
-- **\[RFC8174\]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words", BCP 14, RFC 8174, May 2017. <https://www.rfc-editor.org/info/rfc8174>
-- **\[RFC5424\]** Gerhards, R., "The Syslog Protocol", RFC 5424, March 2009. <https://www.rfc-editor.org/info/rfc5424>
-- **\[POSIX\]** IEEE, "IEEE Std 1003.1-2024 (POSIX.1-2024)", Issue 8, 2024. <https://pubs.opengroup.org/onlinepubs/9799919799/>
-- **\[GNU\]** Free Software Foundation, "GNU Coding Standards". <https://www.gnu.org/prep/standards>
-- **\[NDJSON\]** "Newline Delimited JSON". <https://ndjson.org>
+{% for ref in normative_references %}- **\[{{ ref.key }}\]** {{ ref.citation }}{% if ref.url %} <{{ ref.url }}>{% endif %}
+{% endfor %}
 
 ### Informative References
 
-- **\[RFC7841\]** Halpern, J., Ed., Daigle, L., Ed., and O. Kolkman, Ed., "RFC Streams, Headers, and Boilerplates", RFC 7841, May 2016. <https://www.rfc-editor.org/info/rfc7841>
-- **\[LSP\]** Microsoft, "Language Server Protocol Specification §3.16.1 $/progress", 2021. <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>
-- **\[AdaptiveCards\]** Microsoft, "Adaptive Cards". <https://adaptivecards.io>
-- **\[CloudEvents\]** CNCF, "CloudEvents Specification v1.0.2". <https://cloudevents.io>
-- **\[TLDP\]** "Advanced Bash-Scripting Guide — Standard Option Flags", The Linux Documentation Project. <https://tldp.org/LDP/abs/html/standard-options.html>
-- **\[gemoji\]** GitHub, "gemoji — GitHub emoji". <https://github.com/github/gemoji>
+{% for ref in informative_references %}- **\[{{ ref.key }}\]** {{ ref.citation }}{% if ref.url %} <{{ ref.url }}>{% endif %}
+{% endfor %}
 
 ---
 

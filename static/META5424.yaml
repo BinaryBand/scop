@@ -10,7 +10,18 @@ category: "Standards Track"
 stream: "IETF"
 date: "March 2009"
 
+copyright_year: "2009"
+repository_url: "https://www.rfc-editor.org/info/rfc5424"
 conformance_partial: ""
+
+status_memo: |
+  This document is a structured reference representation of RFC 5424 (The
+  Syslog Protocol), formatted using RFC 7841 boilerplate for consistency with
+  the SCOP specification. It is provided for informational purposes alongside
+  SCOP, which uses RFC 5424 as its event envelope format.
+
+  The authoritative text was published by the IETF as a Standards Track
+  document. It is available at <https://www.rfc-editor.org/rfc/rfc5424>.
 
 abstract: |
   This document describes the syslog protocol, which is used to convey event
@@ -32,6 +43,47 @@ introduction: |
   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
   "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this
   document are to be interpreted as described in [RFC2119] and [RFC8174].
+
+security: |
+  **Plaintext transport.** Syslog has traditionally been transported over
+  plaintext UDP, meaning messages are visible to any network intermediary.
+  Deployments SHOULD use an encrypted transport (e.g. TLS) to protect message
+  confidentiality and integrity.
+
+  **Message forgery.** Syslog provides no authentication or origin verification.
+  Receivers SHOULD use network-layer controls to limit acceptable message sources.
+
+  **Sensitive data.** Applications MUST NOT include secrets, passwords,
+  cryptographic keys, or personally identifiable information (PII) in syslog
+  messages.
+
+  **Denial of service.** An attacker may flood a syslog collector. Receivers
+  SHOULD implement rate limiting and storage quotas.
+
+normative_references:
+  - key: RFC2119
+    citation: 'Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, March 1997.'
+    url: https://www.rfc-editor.org/info/rfc2119
+  - key: RFC8174
+    citation: 'Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words", BCP 14, RFC 8174, May 2017.'
+    url: https://www.rfc-editor.org/info/rfc8174
+  - key: RFC3339
+    citation: 'Klyne, G. and C. Newman, "Date and Time on the Internet: Timestamps", RFC 3339, July 2002.'
+    url: https://www.rfc-editor.org/info/rfc3339
+  - key: RFC3629
+    citation: 'Yergeau, F., "UTF-8, a transformation format of ISO 10646", STD 63, RFC 3629, November 2003.'
+    url: https://www.rfc-editor.org/info/rfc3629
+  - key: RFC5234
+    citation: 'Crocker, D. and P. Overell, "Augmented BNF for Syntax Specifications: ABNF", STD 68, RFC 5234, January 2008.'
+    url: https://www.rfc-editor.org/info/rfc5234
+
+informative_references:
+  - key: RFC3164
+    citation: 'Lonvick, C., "The BSD Syslog Protocol", RFC 3164, August 2001.'
+    url: https://www.rfc-editor.org/info/rfc3164
+  - key: RFC7841
+    citation: 'Halpern, J., Ed., Daigle, L., Ed., and O. Kolkman, Ed., "RFC Streams, Headers, and Boilerplates", RFC 7841, May 2016.'
+    url: https://www.rfc-editor.org/info/rfc7841
 
 sections:
   - title: "Message Format"

@@ -39,6 +39,14 @@ class ToCEntry(BaseModel):
     anchor: str
 
 
+class Reference(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    key: str  # citation key, e.g. "RFC2119"
+    citation: str  # formatted text: author, title, series, date
+    url: str = ""
+
+
 class BaseRFC(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
@@ -59,12 +67,23 @@ class BaseRFC(BaseModel):
     date: str = ""
     issn: str = "2070-1721"
 
-    # §1 Introduction body; empty string → template renders its own default
+    # §1 Introduction body
     introduction: str = ""
 
     # Jinja2 partial path for the Conformance section (§C).
     # Set to "" to omit the section; trailing section numbers shift accordingly.
     conformance_partial: str = "partials/conformance.md.j2"
+
+    # Override the entire Status of This Memo body; empty → generic boilerplate.
+    status_memo: str = ""
+    # Feedback / repository URL used in generic Status of This Memo boilerplate.
+    repository_url: str = ""
+    # Copyright year shown in Copyright Notice (e.g. "2026").
+    copyright_year: str = ""
+    # Security Considerations body text.
+    security: str = ""
+    # IANA Considerations body text.
+    iana: str = "This document has no IANA actions."
 
     north_star: Any = {}
 
@@ -72,6 +91,8 @@ class BaseRFC(BaseModel):
     terms: dict[str, str] = {}
     principles: dict[str, str] = {}
     sections: list[RFCSection] = []
+    normative_references: list[Reference] = []
+    informative_references: list[Reference] = []
 
     @computed_field
     @property

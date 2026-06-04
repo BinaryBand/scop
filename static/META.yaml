@@ -12,13 +12,82 @@ stream: "Independent Submission"
 date: "June 2026"
 issn: "2070-1721"
 
+copyright_year: "2026"
+repository_url: "https://github.com/shaneafsar/scop"
+
 abstract: |
   SCOP defines a machine-readable output format for CLI applications that is simultaneously human-readable as plain text and automatically translatable to graphical user interfaces. It composes three existing standards — POSIX.1 Utility Conventions, GNU Coding Standards, and RFC 5424 — adding a typed event vocabulary, a room-based page model, and a three-flag protocol that together enable any conforming CLI application to be rendered as a GUI without application-specific code.
+
+introduction: |
+  CLI applications lack a formal output standard. Every CLI-to-GUI bridge must be written per-application, duplicating effort and coupling tightly to application internals. SCOP addresses this by defining structured output that is CLI-first (`msg` always readable as plain text), standard-grounded (builds on POSIX, GNU, RFC 5424), and auto-translatable (a conforming renderer needs no app-specific code).
+
+  SCOP defines a wire format, event vocabulary, room model, GNU flag contracts, and page template. It does not define GUI rendering details, transport beyond stdout, authentication, or application business logic.
+
+  SCOP is a composition, not a replacement:
+
+  | Layer | Standard | Role |
+  | --- | --- | --- |
+  | Input | POSIX.1 Ch.12 + GNU | flags, subcommands |
+  | Envelope | RFC 5424 | event fields, severity |
+  | Serialisation | NDJSON | wire format |
+  | Output | SCOP | vocabulary + page model |
+
+  The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119] and [RFC8174].
+
+security: |
+  **Injection.** String values are untrusted. Consumers MUST sanitise before rendering in HTML or injection-sensitive contexts.
+
+  **Denial of service.** Producers MAY emit unbounded events. Consumers SHOULD implement stream size limits.
+
+  **Sensitive data.** Producers MUST NOT include secrets, credentials, or PII in events.
+
+  **Dry run.** Consumers MUST NOT suppress `dry_run: true` annotations. Users MUST be able to distinguish dry-run output from real output.
+
+normative_references:
+  - key: RFC2119
+    citation: 'Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, March 1997.'
+    url: https://www.rfc-editor.org/info/rfc2119
+  - key: RFC8174
+    citation: 'Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words", BCP 14, RFC 8174, May 2017.'
+    url: https://www.rfc-editor.org/info/rfc8174
+  - key: RFC5424
+    citation: 'Gerhards, R., "The Syslog Protocol", RFC 5424, March 2009.'
+    url: https://www.rfc-editor.org/info/rfc5424
+  - key: POSIX
+    citation: 'IEEE, "IEEE Std 1003.1-2024 (POSIX.1-2024)", Issue 8, 2024.'
+    url: https://pubs.opengroup.org/onlinepubs/9799919799/
+  - key: GNU
+    citation: 'Free Software Foundation, "GNU Coding Standards".'
+    url: https://www.gnu.org/prep/standards
+  - key: NDJSON
+    citation: '"Newline Delimited JSON".'
+    url: https://ndjson.org
+
+informative_references:
+  - key: RFC7841
+    citation: 'Halpern, J., Ed., Daigle, L., Ed., and O. Kolkman, Ed., "RFC Streams, Headers, and Boilerplates", RFC 7841, May 2016.'
+    url: https://www.rfc-editor.org/info/rfc7841
+  - key: LSP
+    citation: 'Microsoft, "Language Server Protocol Specification §3.16.1 $/progress", 2021.'
+    url: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+  - key: AdaptiveCards
+    citation: 'Microsoft, "Adaptive Cards".'
+    url: https://adaptivecards.io
+  - key: CloudEvents
+    citation: 'CNCF, "CloudEvents Specification v1.0.2".'
+    url: https://cloudevents.io
+  - key: TLDP
+    citation: '"Advanced Bash-Scripting Guide — Standard Option Flags", The Linux Documentation Project.'
+    url: https://tldp.org/LDP/abs/html/standard-options.html
+  - key: gemoji
+    citation: 'GitHub, "gemoji — GitHub emoji".'
+    url: https://github.com/github/gemoji
 
 sections:
   - title: "Foundation Standards"
     subsections:
       - title: "POSIX.1 and GNU"
+        partial: "partials/flags.md.j2"
         body: |
           Applications SHOULD conform to POSIX.1 Utility Syntax Guidelines (Chapter 12): single-hyphen short options (`-f`), `--` to end option processing, operands following options. Applications SHOULD implement GNU standard flags with defined contracts; each flag's event contract is defined in §8. Flags marked † have no defined contract yet.
 
