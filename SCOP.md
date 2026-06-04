@@ -127,6 +127,8 @@ _† Contract not yet defined; see pending additions._
 
 Every SCOP event is a serialised RFC 5424 message.
 
+SCOP encodes `pri` as severity only (0–7). Producers MUST NOT include the facility component in the `pri` value.
+
 **Required:**
 
 | Field | Key     | Description                              |
@@ -213,14 +215,14 @@ The `intent` field declares how the consumer MUST integrate this stream into the
 
 ### 7.2 PROCESS — Running Operation
 
-Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
+Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all PROCESS\_\* events when `--dry-run` is active. The same applies to `recursive` and `force` when their respective flags are active.
 
 | MSGID            | Required        | Optional                                          |
 | ---------------- | --------------- | ------------------------------------------------- |
 | `PROCESS_BEGIN`  | `id`, `label`   | `total`, `dry_run`, `recursive`, `force`          |
 | `PROCESS_UPDATE` | `id`, `current` | `total`, `label`, `dry_run`, `recursive`, `force` |
 | `PROCESS_END`    | `id`, `ok`      | `dry_run`, `recursive`, `force`                   |
-| `PROCESS_LOG`    | `id`            |                                                   |
+| `PROCESS_LOG`    | `id`            | `dry_run`, `recursive`, `force`                   |
 
 `PROCESS_LOG` carries its payload in `msg` only — no separate `message` field. `msg` is already globally required and serves as the log line directly.
 
@@ -603,7 +605,7 @@ ProcessState {
 
 **Consumer MUST:** parse NDJSON line-by-line; route events per §10 using the `intent` field on `PAGE_BEGIN`; render `msg` as fallback for unknown MSGIDs; ignore unknown MSGIDs and fields without error; map RFC 5424 severity per §4.2.1; synthesize a terminal error state using any partial content received if stdout closes or the process exits before `PAGE_END` — MUST NOT remain in an indeterminate loading state; NOT suppress `dry_run: true` annotations; sanitize string values before rendering in HTML or injection-sensitive contexts.
 
-**Consumer SHOULD:** implement the three-flag protocol (§9); support optional slots (§9); implement stream size limits.
+**Consumer SHOULD:** implement the three-flag protocol (§9); maintain the state model defined in §10.1; support optional slots (§9); implement stream size limits.
 
 ---
 

@@ -126,6 +126,8 @@ sections:
         body: |
           Every SCOP event is a serialised RFC 5424 message.
 
+          SCOP encodes `pri` as severity only (0–7). Producers MUST NOT include the facility component in the `pri` value.
+
           **Required:**
 
           | Field | Key | Description |

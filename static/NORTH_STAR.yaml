@@ -180,6 +180,9 @@ msgids:
     family: PROCESS
     fields:
       id: { required: true, type: string }
+      dry_run: { required: false, type: boolean }
+      recursive: { required: false, type: boolean }
+      force: { required: false, type: boolean }
     rules:
       - MUST: "carry payload in msg only — no separate message field"
 
@@ -643,6 +646,7 @@ conformance:
 
   consumer_SHOULD:
     - "implement the three-flag protocol (§9)"
+    - "maintain the state model defined in §10.1"
     - "support optional slots (§9)"
     - "implement stream size limits"
 

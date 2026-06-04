@@ -45,7 +45,7 @@ The `intent` field declares how the consumer MUST integrate this stream into the
 
 ### 7.2 PROCESS — Running Operation
 
-Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all events when `--dry-run` is active.
+Lifecycle: `PROCESS_BEGIN` → `PROCESS_UPDATE` ×n → `PROCESS_END`. Omit `total` when unknown; consumers SHOULD render an indeterminate indicator. `dry_run: true` MUST be present on all PROCESS_* events when `--dry-run` is active. The same applies to `recursive` and `force` when their respective flags are active.
 
 {{ field_table(['PROCESS_BEGIN', 'PROCESS_UPDATE', 'PROCESS_END', 'PROCESS_LOG']) }}
 
